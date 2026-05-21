@@ -1,35 +1,35 @@
 /**
- * Saludo motivacional para la pantalla de inicio según hora y racha.
+ * Saludo motivacional para la pantalla de inicio según hora y racha semanal.
  */
-export function getMotivationalGreeting({ hour = new Date().getHours(), dayStreak = 0 } = {}) {
-  if (dayStreak >= 14) {
+export function getMotivationalGreeting({ hour = new Date().getHours(), weekStreak = 0 } = {}) {
+  if (weekStreak >= 12) {
     return {
       title: '¡Imparable!',
-      subtitle: `${dayStreak} días seguidos. Hoy sumás uno más.`,
+      subtitle: `${weekStreak} semanas seguidas entrenando. Sos una máquina.`,
     };
   }
-  if (dayStreak >= 7) {
+  if (weekStreak >= 8) {
     return {
-      title: '¡Semana épica!',
-      subtitle: `Llevás ${dayStreak} días de racha. No pares ahora.`,
+      title: '¡Constancia de hierro!',
+      subtitle: `Llevás ${weekStreak} semanas de racha. No pares ahora.`,
     };
   }
-  if (dayStreak >= 3) {
+  if (weekStreak >= 4) {
     return {
       title: '¡Vas muy bien!',
-      subtitle: `${dayStreak} días seguidos entrenando. Seguí así.`,
+      subtitle: `${weekStreak} semanas seguidas con al menos un entreno.`,
     };
   }
-  if (dayStreak === 2) {
+  if (weekStreak >= 2) {
     return {
-      title: '¡Dos días seguidos!',
-      subtitle: 'La constancia es lo que marca la diferencia.',
+      title: '¡Buena racha!',
+      subtitle: 'Dos semanas seguidas sumando. Seguí así.',
     };
   }
-  if (dayStreak === 1) {
+  if (weekStreak === 1) {
     return {
-      title: '¡Buen arranque!',
-      subtitle: 'Ayer entrenaste. Hoy es tu turno otra vez.',
+      title: '¡Arrancaste la racha!',
+      subtitle: 'Con un día por semana ya cuenta. Mantenela viva.',
     };
   }
 

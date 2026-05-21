@@ -4,7 +4,7 @@ import { toLocalISODate } from '../../utils/date';
 import { resolveRoutineIdForDate } from '../../utils/routineRotation';
 import { getMotivationalGreeting } from '../../utils/motivationalGreeting';
 
-export default function HomeGreeting({ app, dayStreak = 0 }) {
+export default function HomeGreeting({ app, weekStreak = 0 }) {
   const isDark = app.isDark;
   const todayStr = toLocalISODate(new Date());
 
@@ -15,7 +15,7 @@ export default function HomeGreeting({ app, dayStreak = 0 }) {
 
   const todayBlock = app.activeBlocks.find((b) => b.id === todayRoutineId);
   const todayAlias = todayRoutineId ? app.getAlias(todayRoutineId) : '';
-  const { title, subtitle } = getMotivationalGreeting({ dayStreak });
+  const { title, subtitle } = getMotivationalGreeting({ weekStreak });
   const noRoutines = app.activeBlocks.length === 0;
 
   return (

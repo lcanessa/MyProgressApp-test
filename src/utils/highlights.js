@@ -76,28 +76,17 @@ function isDayFullyComplete(day, routines) {
   return exercises.every((_, i) => day.completed?.[`${rid}-${i}`] === true);
 }
 
-function computeStreakEndingAt(trainingSet, endDate) {
-  let streak = 0;
-  let cursor = endDate;
-  if (!trainingSet.has(cursor)) {
-    cursor = addDays(cursor, -1);
-  }
-  while (trainingSet.has(cursor)) {
-    streak += 1;
-    cursor = addDays(cursor, -1);
-  }
-  return streak;
-}
-
-function longestDayStreak(trainingDates) {
-  if (!trainingDates.length) return 0;
+/** Mejor racha histórica de semanas consecutivas (lun–dom) con al menos un entreno. */
+function longestWeekStreak(trainingDates) {
+  const weekKeys = [...new Set(trainingDates.map(getWeekKey))].sort();
+  if (!weekKeys.length) return 0;
   let best = 1;
   let run = 1;
-  for (let i = 1; i < trainingDates.length; i += 1) {
-    const prev = parseDate(trainingDates[i - 1]);
-    const curr = parseDate(trainingDates[i]);
+  for (let i = 1; i < weekKeys.length; i += 1) {
+    const prev = parseDate(weekKeys[i - 1]);
+    const curr = parseDate(weekKeys[i]);
     const diffDays = Math.round((curr - prev) / 86400000);
-    if (diffDays === 1) {
+    if (diffDays === 7) {
       run += 1;
       best = Math.max(best, run);
     } else {
@@ -269,7 +258,6 @@ function countMonthTrainingDays(diary, year, month) {
 export function computeHighlights({ diary, routines, library }) {
   const today = toLocalISODate(new Date());
   const trainingDates = getTrainingDates(diary);
-  const trainingSet = new Set(trainingDates);
   const weekSet = new Set(trainingDates.map(getWeekKey));
 
   let perfectDays = 0;
@@ -286,9 +274,8 @@ export function computeHighlights({ diary, routines, library }) {
   return {
     hasData: trainingDates.length > 0,
     today,
-    dayStreak: computeStreakEndingAt(trainingSet, today),
-    bestDayStreak: longestDayStreak(trainingDates),
     weekStreak: computeWeekStreak(weekSet, today),
+    bestWeekStreak: longestWeekStreak(trainingDates),
     totalExercisesCompleted: countCompletedExercises(diary),
     totalTrainingDays: trainingDates.length,
     perfectDays,
