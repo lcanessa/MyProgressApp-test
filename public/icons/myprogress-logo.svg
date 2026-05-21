@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 220" fill="none" role="img" aria-label="MyProgress">
+  <defs>
+    <linearGradient id="logo-silverM" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="logo-purpleP" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d8b4fe"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#7e22ce"/>
+    </linearGradient>
+    <linearGradient id="logo-ironBar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="logo-plateGlow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7e22ce"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="logo-textMy" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#7e22ce"/>
+    </linearGradient>
+    <linearGradient id="logo-ekg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7e22ce" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#7e22ce" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="logo-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <g transform="translate(200 8) scale(1.35)">
+    <g fill="url(#logo-ironBar)">
+      <rect x="5" y="48" width="90" height="6" rx="2"/>
+      <rect x="12" y="30" width="8" height="42" rx="3"/>
+      <rect x="4" y="35" width="6" height="32" rx="2"/>
+      <rect x="80" y="30" width="8" height="42" rx="3"/>
+      <rect x="90" y="35" width="6" height="32" rx="2"/>
+    </g>
+    <rect x="3" y="33" width="8" height="36" rx="2" stroke="url(#logo-plateGlow)" stroke-width="1.2" fill="none" opacity="0.9"/>
+    <rect x="89" y="33" width="8" height="36" rx="2" stroke="url(#logo-plateGlow)" stroke-width="1.2" fill="none" opacity="0.9"/>
+    <path d="M20 90 L38 20 L55 55 L75 25 L65 45 L50 35 L40 65 L28 85 Z" fill="url(#logo-silverM)" stroke="#050505" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M45 85 L58 35 L85 35 L85 65 L60 65 L55 85 Z M60 45 L55 55 L75 55 L75 45 Z" fill="url(#logo-purpleP)" fill-rule="evenodd" stroke="#050505" stroke-width="1.5" stroke-linejoin="round" filter="url(#logo-glow)"/>
+  </g>
+
+  <text x="280" y="168" text-anchor="middle" font-family="system-ui, Segoe UI, Roboto, sans-serif" font-size="42" font-weight="900" font-style="italic" letter-spacing="-1">
+    <tspan fill="url(#logo-textMy)">My</tspan><tspan fill="#ffffff">Progress</tspan>
+  </text>
+
+  <path d="M40 198 H250 V198 H310 V178 H340 V218 H370 V198 H520" stroke="url(#logo-ekg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#logo-glow)"/>
+</svg>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.jpeg" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#050505" />
+    <meta name="description" content="Lleva el control de tus rutinas, series y progreso en el gimnasio." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MP Test" />
+    <title>MyProgress Test</title>
+  </head>
+  <body>
+    <script>
+      (function () {
+        try {
+          var s = localStorage.getItem('myprogress_test_theme_pref');
+          var dark =
+            s !== null
+              ? JSON.parse(s)
+              : window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var bg = dark ? '#050505' : '#f8fafc';
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+          document.documentElement.style.backgroundColor = bg;
+          document.body.style.backgroundColor = bg;
+          var h = window.innerHeight;
+          if (h > 0) {
+            document.documentElement.style.setProperty('--app-height', h + 'px');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

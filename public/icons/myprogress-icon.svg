@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" role="img" aria-label="MyProgress">
+  <rect width="512" height="512" rx="112" fill="#000000"/>
+  <defs>
+    <linearGradient id="silverM" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="purpleP" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d8b4fe"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#7e22ce"/>
+    </linearGradient>
+    <linearGradient id="ironBar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="plateGlow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7e22ce"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <g transform="translate(56 56) scale(4)">
+    <g fill="url(#ironBar)">
+      <rect x="5" y="48" width="90" height="6" rx="2"/>
+      <rect x="12" y="30" width="8" height="42" rx="3"/>
+      <rect x="4" y="35" width="6" height="32" rx="2"/>
+      <rect x="80" y="30" width="8" height="42" rx="3"/>
+      <rect x="90" y="35" width="6" height="32" rx="2"/>
+    </g>
+    <rect x="3" y="33" width="8" height="36" rx="2" stroke="url(#plateGlow)" stroke-width="1.2" fill="none" opacity="0.9"/>
+    <rect x="89" y="33" width="8" height="36" rx="2" stroke="url(#plateGlow)" stroke-width="1.2" fill="none" opacity="0.9"/>
+    <path d="M20 90 L38 20 L55 55 L75 25 L65 45 L50 35 L40 65 L28 85 Z" fill="url(#silverM)" stroke="#050505" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M45 85 L58 35 L85 35 L85 65 L60 65 L55 85 Z M60 45 L55 55 L75 55 L75 45 Z" fill="url(#purpleP)" fill-rule="evenodd" stroke="#050505" stroke-width="1.5" stroke-linejoin="round" filter="url(#glow)"/>
+  </g>
+</svg>
