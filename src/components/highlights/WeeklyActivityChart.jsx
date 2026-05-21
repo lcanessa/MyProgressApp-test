@@ -1,13 +1,18 @@
+import HighlightCardCornerFade from './HighlightCardCornerFade';
+
 export default function WeeklyActivityChart({ weeks, maxDays, isDark }) {
   const peak = Math.max(1, maxDays);
   const trackClass = isDark ? 'bg-white/5' : 'bg-slate-100';
 
   return (
-    <div className={`rounded-3xl border p-5 ${isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}>
-      <h3 className={`text-[10px] font-black uppercase tracking-widest mb-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+    <div
+      className={`relative overflow-hidden rounded-3xl border p-5 ${isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}
+    >
+      <HighlightCardCornerFade isDark={isDark} />
+      <h3 className={`relative text-[10px] font-black uppercase tracking-widest mb-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
         Actividad semanal
       </h3>
-      <div className="flex items-end justify-between gap-1.5">
+      <div className="relative flex items-end justify-between gap-1.5">
         {weeks.map((w) => {
           const pct = (w.days / peak) * 100;
           const hasDays = w.days > 0;

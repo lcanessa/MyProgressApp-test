@@ -1,3 +1,6 @@
+import { ChartNetwork } from 'lucide-react';
+import HighlightCardCornerFade from './HighlightCardCornerFade';
+
 const CX = 120;
 const CY = 120;
 const RADIUS = 78;
@@ -61,20 +64,30 @@ export default function MuscleRadarChart({ radar, isDark }) {
 
   return (
     <div
-      className={`rounded-3xl border p-5 ${isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}
+      className={`relative overflow-hidden rounded-3xl border p-5 ${isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}
     >
-      <div className="mb-1">
-        <h3
-          className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-purple-400' : 'text-purple-600'}`}
-        >
-          Balance muscular
-        </h3>
-        <p className={`text-[11px] mt-1 font-medium ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-          Ejercicios completados por grupo muscular
-        </p>
+      <HighlightCardCornerFade isDark={isDark} />
+      <div className="relative pb-4 mb-3 border-b border-inherit">
+        <div className="flex items-center gap-3">
+          <div
+            className={`p-3 rounded-2xl ${isDark ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-100 text-amber-600'}`}
+          >
+            <ChartNetwork size={24} strokeWidth={2.5} />
+          </div>
+          <div>
+            <p
+              className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-amber-400/90' : 'text-amber-600'}`}
+            >
+              Balance muscular
+            </p>
+            <p className={`text-[11px] mt-1 font-medium ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+              Ejercicios completados por grupo muscular
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="relative w-full max-w-[280px] mx-auto mt-3">
+      <div className="relative w-full max-w-[280px] mx-auto">
         <svg
           viewBox="0 0 240 240"
           className="w-full h-auto"
@@ -170,7 +183,7 @@ export default function MuscleRadarChart({ radar, isDark }) {
 
       {insight && (
         <p
-          className={`text-xs font-bold text-center mt-3 leading-relaxed ${
+          className={`relative text-xs font-bold text-center mt-3 leading-relaxed ${
             isBalanced
               ? isDark
                 ? 'text-emerald-400'

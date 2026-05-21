@@ -1,3 +1,5 @@
+import HighlightCardCornerFade from './HighlightCardCornerFade';
+
 export default function HighlightStatCard({ icon: Icon, label, value, hint, isDark, accent = 'purple' }) {
   const accents = {
     purple: isDark
@@ -12,12 +14,13 @@ export default function HighlightStatCard({ icon: Icon, label, value, hint, isDa
 
   return (
     <div
-      className={`rounded-2xl border p-4 flex flex-col gap-2 ${isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}
+      className={`relative overflow-hidden rounded-2xl border p-4 flex flex-col gap-2 ${isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}
     >
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${accents[accent] || accents.purple}`}>
+      <HighlightCardCornerFade isDark={isDark} rounded="2xl" />
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center border relative ${accents[accent] || accents.purple}`}>
         <Icon size={18} strokeWidth={2.5} />
       </div>
-      <div>
+      <div className="relative">
         <p className={`text-2xl font-black tabular-nums leading-none ${isDark ? 'text-white' : 'text-slate-800'}`}>{value}</p>
         <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
           {label}

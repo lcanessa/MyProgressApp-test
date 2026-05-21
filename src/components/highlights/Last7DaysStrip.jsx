@@ -1,12 +1,16 @@
 import { CheckCircle2 } from 'lucide-react';
+import HighlightCardCornerFade from './HighlightCardCornerFade';
 
 export default function Last7DaysStrip({ days, isDark }) {
   return (
-    <div className={`rounded-3xl border p-5 ${isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}>
-      <h3 className={`text-[10px] font-black uppercase tracking-widest mb-4 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+    <div
+      className={`relative overflow-hidden rounded-3xl border p-5 ${isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}
+    >
+      <HighlightCardCornerFade isDark={isDark} />
+      <h3 className={`relative text-[10px] font-black uppercase tracking-widest mb-4 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
         Últimos 7 días
       </h3>
-      <div className="flex justify-between gap-2">
+      <div className="relative flex justify-between gap-2">
         {days.map((d) => (
           <div key={d.dateStr} className="flex flex-col items-center gap-2 flex-1">
             <span className={`text-[9px] font-bold uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
