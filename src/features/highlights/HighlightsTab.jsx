@@ -15,6 +15,7 @@ import WeeklyActivityChart from '../../components/highlights/WeeklyActivityChart
 import Last7DaysStrip from '../../components/highlights/Last7DaysStrip';
 import PersonalRecordsCard from '../../components/highlights/PersonalRecordsCard';
 import HomeGreeting from '../../components/highlights/HomeGreeting';
+import MuscleRadarChart from '../../components/highlights/MuscleRadarChart';
 
 export default function HighlightsTab({ app }) {
   const stats = useMemo(
@@ -143,20 +144,8 @@ export default function HighlightsTab({ app }) {
         />
       </div>
 
-      {stats.topMuscle && (
-        <div
-          className={`rounded-2xl border px-4 py-3 flex items-center gap-3 ${isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200'}`}
-        >
-          <Award size={20} className={isDark ? 'text-emerald-400' : 'text-emerald-600'} />
-          <div>
-            <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-              Músculo más trabajado
-            </p>
-            <p className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              {stats.topMuscle[0]} · {stats.topMuscle[1]} ejercicios
-            </p>
-          </div>
-        </div>
+      {stats.muscleRadar.hasTraining && (
+        <MuscleRadarChart radar={stats.muscleRadar} isDark={isDark} />
       )}
 
       <WeeklyActivityChart weeks={stats.weeklyActivity} maxDays={stats.maxWeekDays} isDark={isDark} />

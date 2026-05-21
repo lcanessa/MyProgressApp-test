@@ -1,6 +1,9 @@
 import { toLocalISODate } from './date';
 import { parseWeightNumber } from './sessionValues';
 
+/** Grupos del gráfico radar (sin Cardio/Otro). */
+export const RADAR_MUSCLE_GROUPS = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core'];
+
 function parseDate(dateStr) {
   return new Date(`${dateStr}T12:00:00`);
 }
@@ -142,6 +145,27 @@ function getMuscleBreakdown(diary, routines, library) {
   return { top: sorted[0] || null, counts };
 }
 
+/** Datos normalizados para el gráfico radar de balance muscular. */
+export function buildMuscleRadar(muscleCounts) {
+  const values = RADAR_MUSCLE_GROUPS.map((label) => muscleCounts[label] || 0);
+  const max = Math.max(1, ...values);
+  const total = values.reduce((sum, n) => sum + n, 0);
+
+  const axes = RADAR_MUSCLE_GROUPS.map((label, i) => ({
+    label,
+    count: values[i],
+    normalized: values[i] / max,
+  }));
+
+  const minCount = Math.min(...values);
+  const maxCount = Math.max(...values);
+  const weakest =
+    total > 0 ? axes.find((a) => a.count === minCount) ?? null : null;
+  const isBalanced = total > 0 && maxCount === minCount;
+
+  return { axes, total, weakest, isBalanced, hasTraining: total > 0 };
+}
+
 function getWeeklyActivity(diary, weeks = 8) {
   const today = toLocalISODate(new Date());
   const currentWeek = getWeekKey(today);
@@ -271,8 +295,7 @@ export function computeHighlights({ diary, routines, library }) {
     setsLogged: countSetsLogged(diary),
     volumeKg: sumVolumeKg(diary),
     monthTrainingDays: countMonthTrainingDays(diary, now.getFullYear(), now.getMonth()),
-    topMuscle: muscle.top,
-    muscleCounts: muscle.counts,
+    muscleRadar: buildMuscleRadar(muscle.counts),
     weeklyActivity,
     maxWeekDays,
     last7Days: getLast7DaysActivity(diary, routines, today),
