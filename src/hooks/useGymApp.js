@@ -37,6 +37,7 @@ import {
   findVideoIdForName,
   attachVideoToLibraryEntry,
 } from '../utils/exerciseVideo';
+import { resolveRoutineIdForDate } from '../utils/routineRotation';
 
 /** Quita datos de ejemplo si quedaron de una versión anterior. */
 function clearLegacySampleData() {
@@ -78,7 +79,7 @@ const DEFAULT_REST_SECONDS = 90;
 
 export function useGymApp() {
 
-const [activeTab, setActiveTab] = useState('workout');
+const [activeTab, setActiveTab] = useState('highlights');
 const calendarRef = useRef(null);
 const routinesRef = useRef(null);
 const mainRef = useRef(null);
@@ -264,29 +265,10 @@ const changeDate = useCallback((newDateStr) => {
 setSelectedDate(newDateStr);
 
 setDiary(prev => {
+const targetId = resolveRoutineIdForDate(prev, newDateStr, activeBlocks);
+setActiveRoutineId(targetId);
+
 const dayData = prev[newDateStr];
-const hasData = dayData && Object.keys(dayData.sessions || {}).length > 0;
-let targetId = activeBlocks[0]?.id;
-
-if (hasData) {
-targetId = dayData.routineId;
-} else {
-const pastDates = Object.keys(prev).filter(d => d < newDateStr).sort().reverse();
-for (const d of pastDates) {
-if (prev[d] && prev[d].completed && Object.values(prev[d].completed).some(v => v === true)) {
-const idx = activeBlocks.findIndex(b => b.id === prev[d].routineId);
-if (idx !== -1) {
-targetId = activeBlocks[(idx + 1) % activeBlocks.length]?.id;
-break;
-} else {
-targetId = activeBlocks[0]?.id;
-break;
-}
-}
-}
-}
-
-setActiveRoutineId(targetId ?? null);
 
 if (!targetId) return prev;
 
@@ -362,6 +344,11 @@ changeDate(today);
 setTimeout(() => scrollCalendarToDate(today), 50);
 mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
 }, [changeDate, scrollCalendarToDate]);
+
+const startTodayWorkout = useCallback(() => {
+goToToday();
+setActiveTab('workout');
+}, [goToToday]);
 
 // Scroll del calendario al cambiar fecha
 useEffect(() => {
@@ -999,6 +986,7 @@ reader.readAsText(file, 'UTF-8');
     getAlias,
     changeDate,
     goToToday,
+    startTodayWorkout,
     scrollRoutineIntoView,
     startTimer, openRestTimer, setRestDuration, stopTimer, closeTimer, add15sToTimer, toggleSound,
     changeRoutineManually,

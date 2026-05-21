@@ -11,8 +11,8 @@ export default function BottomNav({ app }) {
         }`}
       >
         {[
-          { id: 'workout', icon: <Dumbbell size={20} strokeWidth={2.5} /> },
           { id: 'highlights', icon: <Crown size={20} strokeWidth={2.5} /> },
+          { id: 'workout', icon: <Dumbbell size={20} strokeWidth={2.5} /> },
           { id: 'edit', icon: <ClipboardList size={20} strokeWidth={2.5} /> },
           { id: 'library', icon: <List size={20} strokeWidth={2.5} /> },
           { id: 'settings', icon: <Settings size={20} strokeWidth={2.5} /> },

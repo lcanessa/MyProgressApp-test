@@ -14,6 +14,7 @@ import HighlightStatCard from '../../components/highlights/HighlightStatCard';
 import WeeklyActivityChart from '../../components/highlights/WeeklyActivityChart';
 import Last7DaysStrip from '../../components/highlights/Last7DaysStrip';
 import PersonalRecordsCard from '../../components/highlights/PersonalRecordsCard';
+import HomeGreeting from '../../components/highlights/HomeGreeting';
 
 export default function HighlightsTab({ app }) {
   const stats = useMemo(
@@ -25,17 +26,20 @@ export default function HighlightsTab({ app }) {
 
   if (!stats.hasData) {
     return (
-      <div className="flex flex-col items-center justify-center text-center w-full min-h-[min(50vh,22rem)] px-6 py-12">
-        <div
-          className={`w-full max-w-[17rem] mx-auto rounded-3xl border p-8 flex flex-col items-center ${isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}
-        >
-          <Award size={40} className={`mb-4 shrink-0 ${isDark ? 'text-purple-500/40' : 'text-purple-300'}`} />
-          <p className={`font-black text-sm w-full ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            Todavía no hay destacados
-          </p>
-          <p className={`text-xs mt-2 leading-relaxed w-full ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-            Completá ejercicios en Entreno y acá vas a ver rachas, récords y tu actividad semanal.
-          </p>
+      <div className="space-y-6 animate-in fade-in duration-300 pb-2">
+        <HomeGreeting app={app} dayStreak={0} />
+        <div className="flex flex-col items-center justify-center text-center w-full px-2 py-6">
+          <div
+            className={`w-full max-w-[17rem] mx-auto rounded-3xl border p-8 flex flex-col items-center ${isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}
+          >
+            <Award size={40} className={`mb-4 shrink-0 ${isDark ? 'text-purple-500/40' : 'text-purple-300'}`} />
+            <p className={`font-black text-sm w-full ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              Tu progreso aparece acá
+            </p>
+            <p className={`text-xs mt-2 leading-relaxed w-full ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+              Completá ejercicios en Entreno y vas a ver rachas, récords y tu actividad semanal.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -43,6 +47,8 @@ export default function HighlightsTab({ app }) {
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300 pb-2">
+      <HomeGreeting app={app} dayStreak={stats.dayStreak} />
+
       {/* Hero racha */}
       <div
         className={`relative overflow-hidden rounded-3xl border p-5 ${

@@ -1,4 +1,4 @@
-import { Sun, Moon, CalendarDays, ClipboardList, List, Settings, Crown } from 'lucide-react';
+import { Sun, Moon, CalendarDays, ClipboardList, List, Settings } from 'lucide-react';
 import MyProgressLogo from '../brand/MyProgressLogo';
 import TabPageTitle from './TabPageTitle';
 import DayCalendarStrip from './DayCalendarStrip';
@@ -89,18 +89,6 @@ export default function AppHeader({ app }) {
         </div>
       )}
 
-      {app.activeTab === 'highlights' && (
-        <div className="px-4 pb-3">
-          <TabPageTitle
-            icon={Crown}
-            title="Destacados"
-            subtitle="Tu progreso, rachas y logros"
-            isDark={app.isDark}
-            className="mb-0"
-            glass
-          />
-        </div>
-      )}
     </header>
   );
 }
