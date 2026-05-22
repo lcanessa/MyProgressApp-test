@@ -8,6 +8,7 @@ export default function BodyTab({ app }) {
         routines={app.routines}
         library={app.library}
         isDark={app.isDark}
+        selectedDate={app.selectedDate}
       />
     </div>
   );

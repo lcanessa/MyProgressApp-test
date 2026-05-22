@@ -295,9 +295,12 @@ export function formatVolume(kg) {
   return `${kg.toLocaleString('es-AR')} kg`;
 }
 
-/** Devuelve el color de calor según el porcentaje relativo al músculo pico. */
+/**
+ * Color de calor según porcentaje relativo al músculo pico (últimos 30 días).
+ * 0% → gris | 1-30% → verde | 31-60% → amarillo | 61-85% → naranja | 86-100% → rojo
+ */
 export function muscleHeatColor(pct, isDark) {
-  if (pct <= 0.10) return isDark ? '#334155' : '#cbd5e1';
+  if (pct === 0) return isDark ? '#334155' : '#cbd5e1';
   if (pct <= 0.30) return '#22c55e';
   if (pct <= 0.60) return '#eab308';
   if (pct <= 0.85) return '#f97316';
@@ -305,26 +308,29 @@ export function muscleHeatColor(pct, isDark) {
 }
 
 /**
- * Calcula el volumen histórico (kg×reps) por grupo muscular
- * y devuelve datos listos para el MuscleHeatmap.
+ * Cuenta series (sets) completadas por grupo muscular en los últimos 30 días
+ * desde selectedDate. Un set es válido si tiene peso > 0 o reps > 0.
  */
-export function buildMuscleHeatmap(diary, routines, library) {
-  const HEATMAP_MUSCLES = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core'];
+export function buildMuscleHeatmap(diary, routines, library, selectedDate) {
+  const HEATMAP_MUSCLES = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Cardio'];
   const libById = Object.fromEntries(library.map((ex) => [ex.id, ex]));
-  const muscleVolume = {};
+  const muscleSets = {};
 
-  for (const day of Object.values(diary)) {
+  const refDate = selectedDate || toLocalISODate(new Date());
+  const cutoff = new Date(`${refDate}T12:00:00`);
+  cutoff.setDate(cutoff.getDate() - 29); // ventana de 30 días inclusive
+  const cutoffStr = toLocalISODate(cutoff);
+
+  for (const [dateStr, day] of Object.entries(diary)) {
+    if (dateStr < cutoffStr || dateStr > refDate) continue;
     const rid = day?.routineId;
     if (!rid) continue;
     const exercises = routines[rid] || [];
     const sessions = day?.sessions || {};
-    const seen = new Set();
 
     for (const [key, raw] of Object.entries(sessions)) {
       const m = key.match(/^(.*-s\d+)-w$/);
       if (!m) continue;
-      if (seen.has(m[1])) continue;
-      seen.add(m[1]);
 
       const prefix = `${rid}-`;
       if (!m[1].startsWith(prefix)) continue;
@@ -335,40 +341,29 @@ export function buildMuscleHeatmap(diary, routines, library) {
       const ex = exercises[exIdx];
       if (!ex) continue;
 
-      const lib = ex.exId ? libById[ex.exId] : null;
-      const muscle = lib?.muscle || ex.muscle || 'Otro';
-
       const w = parseWeightNumber(raw);
       const r = parseFloat(sessions[`${m[1]}-r`]);
-      const reps = Number.isFinite(r) && r > 0 ? r : 0;
+      const hasWeight = Number.isFinite(w) && w > 0;
+      const hasReps = Number.isFinite(r) && r > 0;
+      if (!hasWeight && !hasReps) continue; // serie vacía, ignorar
 
-      let volume = 0;
-      if (Number.isFinite(w) && w > 0) {
-        volume = w;
-      } else if (reps > 0) {
-        volume = reps;
-      }
-
-      if (volume > 0) {
-        muscleVolume[muscle] = (muscleVolume[muscle] || 0) + volume;
-      }
+      const lib = ex.exId ? libById[ex.exId] : null;
+      const muscle = lib?.muscle || ex.muscle || 'Otro';
+      muscleSets[muscle] = (muscleSets[muscle] || 0) + 1;
     }
   }
 
-  const values = HEATMAP_MUSCLES.map((m) => muscleVolume[m] || 0);
-  const maxVol = Math.max(1, ...values);
+  const values = HEATMAP_MUSCLES.map((m) => muscleSets[m] || 0);
+  const maxSets = Math.max(1, ...values);
   const total = values.reduce((s, n) => s + n, 0);
 
   const muscles = HEATMAP_MUSCLES.map((label) => ({
     label,
-    volume: muscleVolume[label] || 0,
-    pct: (muscleVolume[label] || 0) / maxVol,
+    sets: muscleSets[label] || 0,
+    pct: (muscleSets[label] || 0) / maxSets,
   }));
 
-  const top3 = [...muscles]
-    .filter((m) => m.volume > 0)
-    .sort((a, b) => b.volume - a.volume)
-    .slice(0, 3);
+  const sorted = [...muscles].sort((a, b) => b.sets - a.sets);
 
-  return { muscles, top3, hasData: total > 0 };
+  return { muscles, sorted, hasData: total > 0 };
 }

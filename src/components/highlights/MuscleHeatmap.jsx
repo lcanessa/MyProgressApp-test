@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ImageOff } from 'lucide-react';
-import { buildMuscleHeatmap, muscleHeatColor, formatVolume } from '../../utils/highlights';
+import { buildMuscleHeatmap, muscleHeatColor } from '../../utils/highlights';
 
 const FRONT_BLOBS = [
   { muscle: 'Pecho',   cx: 35, cy: 27, rx: 11, ry: 7  },
@@ -34,11 +34,13 @@ const BACK_BLOBS = [
 
 const LEGEND = [
   { label: 'Sin trabajo', pct: 0    },
-  { label: 'Ligero',      pct: 0.20 },
+  { label: 'Ligero',      pct: 0.15 },
   { label: 'Moderado',    pct: 0.45 },
   { label: 'Intenso',     pct: 0.73 },
   { label: 'Pico',        pct: 1    },
 ];
+
+const formatSets = (n) => n === 1 ? '1 serie' : `${n} series`;
 
 function getMuscleColors(muscles, isDark) {
   const map = Object.fromEntries(muscles.map((m) => [m.label, muscleHeatColor(m.pct, isDark)]));
@@ -138,10 +140,10 @@ function BodyView({ src, blobs, colors, filterId }) {
   );
 }
 
-export default function MuscleHeatmap({ diary, routines, library, isDark }) {
+export default function MuscleHeatmap({ diary, routines, library, isDark, selectedDate }) {
   const data = useMemo(
-    () => buildMuscleHeatmap(diary, routines, library),
-    [diary, routines, library]
+    () => buildMuscleHeatmap(diary, routines, library, selectedDate),
+    [diary, routines, library, selectedDate]
   );
 
   const colors = getMuscleColors(data.muscles, isDark);
@@ -189,64 +191,64 @@ export default function MuscleHeatmap({ diary, routines, library, isDark }) {
         </div>
       </div>
 
-      {/* Top 3 músculos */}
-      {data.top3.length > 0 && (
-        <div
-          className={`rounded-2xl px-4 py-3.5 space-y-2.5 ${
-            isDark ? 'bg-white/5' : 'bg-slate-50 border border-slate-200'
+      {/* Todos los grupos musculares ordenados por series — últimos 30 días */}
+      <div
+        className={`rounded-2xl px-4 py-3.5 space-y-2.5 ${
+          isDark ? 'bg-white/5' : 'bg-slate-50 border border-slate-200'
+        }`}
+      >
+        <p
+          className={`text-[10px] font-black uppercase tracking-widest mb-1 ${
+            isDark ? 'text-amber-400/90' : 'text-amber-600'
           }`}
         >
-          <p
-            className={`text-[10px] font-black uppercase tracking-widest ${
-              isDark ? 'text-amber-400/90' : 'text-amber-600'
-            }`}
-          >
-            Más trabajados
-          </p>
-          {data.top3.map((m, i) => (
-            <div key={m.label} className="flex items-center gap-2.5">
+          Últimos 30 días
+        </p>
+        {data.sorted.map((m, i) => (
+          <div key={m.label} className="flex items-center gap-2.5">
+            <span
+              className={`text-[11px] font-black w-4 shrink-0 tabular-nums ${
+                isDark ? 'text-slate-600' : 'text-slate-400'
+              }`}
+            >
+              {i + 1}
+            </span>
+            <div
+              className="w-2.5 h-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: muscleHeatColor(m.pct, isDark) }}
+            />
+            <div className="flex-1 flex items-center gap-2 min-w-0">
               <span
-                className={`text-[11px] font-black w-4 shrink-0 tabular-nums ${
-                  isDark ? 'text-slate-600' : 'text-slate-400'
-                }`}
+                className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}
+                style={{ minWidth: '4.5rem' }}
               >
-                {i + 1}
+                {m.label}
               </span>
               <div
-                className="w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: muscleHeatColor(m.pct, isDark) }}
-              />
-              <div className="flex-1 flex items-center gap-2 min-w-0">
-                <span
-                  className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}
-                  style={{ minWidth: '5rem' }}
-                >
-                  {m.label}
-                </span>
-                <div
-                  className="flex-1 h-1.5 rounded-full overflow-hidden"
-                  style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0' }}
-                >
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.round(m.pct * 100)}%`,
-                      backgroundColor: muscleHeatColor(m.pct, isDark),
-                    }}
-                  />
-                </div>
-              </div>
-              <span
-                className={`text-[11px] font-black tabular-nums shrink-0 ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
+                className="flex-1 h-1.5 rounded-full overflow-hidden"
+                style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0' }}
               >
-                {formatVolume(m.volume)}
-              </span>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.round(m.pct * 100)}%`,
+                    backgroundColor: muscleHeatColor(m.pct, isDark),
+                  }}
+                />
+              </div>
             </div>
-          ))}
-        </div>
-      )}
+            <span
+              className={`text-[11px] font-black tabular-nums shrink-0 ${
+                m.sets === 0
+                  ? isDark ? 'text-slate-600' : 'text-slate-400'
+                  : isDark ? 'text-slate-300' : 'text-slate-600'
+              }`}
+            >
+              {m.sets === 0 ? '—' : formatSets(m.sets)}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
