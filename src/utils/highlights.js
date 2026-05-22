@@ -294,3 +294,81 @@ export function formatVolume(kg) {
   if (kg >= 1000) return `${(kg / 1000).toFixed(1)}t`;
   return `${kg.toLocaleString('es-AR')} kg`;
 }
+
+/** Devuelve el color de calor según el porcentaje relativo al músculo pico. */
+export function muscleHeatColor(pct, isDark) {
+  if (pct <= 0.10) return isDark ? '#334155' : '#cbd5e1';
+  if (pct <= 0.30) return '#22c55e';
+  if (pct <= 0.60) return '#eab308';
+  if (pct <= 0.85) return '#f97316';
+  return '#dc2626';
+}
+
+/**
+ * Calcula el volumen histórico (kg×reps) por grupo muscular
+ * y devuelve datos listos para el MuscleHeatmap.
+ */
+export function buildMuscleHeatmap(diary, routines, library) {
+  const HEATMAP_MUSCLES = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core'];
+  const libById = Object.fromEntries(library.map((ex) => [ex.id, ex]));
+  const muscleVolume = {};
+
+  for (const day of Object.values(diary)) {
+    const rid = day?.routineId;
+    if (!rid) continue;
+    const exercises = routines[rid] || [];
+    const sessions = day?.sessions || {};
+    const seen = new Set();
+
+    for (const [key, raw] of Object.entries(sessions)) {
+      const m = key.match(/^(.*-s\d+)-w$/);
+      if (!m) continue;
+      if (seen.has(m[1])) continue;
+      seen.add(m[1]);
+
+      const prefix = `${rid}-`;
+      if (!m[1].startsWith(prefix)) continue;
+      const rest = m[1].slice(prefix.length);
+      const exIdxMatch = rest.match(/^(\d+)-/);
+      if (!exIdxMatch) continue;
+      const exIdx = Number(exIdxMatch[1]);
+      const ex = exercises[exIdx];
+      if (!ex) continue;
+
+      const lib = ex.exId ? libById[ex.exId] : null;
+      const muscle = lib?.muscle || ex.muscle || 'Otro';
+
+      const w = parseWeightNumber(raw);
+      const r = parseFloat(sessions[`${m[1]}-r`]);
+      const reps = Number.isFinite(r) && r > 0 ? r : 0;
+
+      let volume = 0;
+      if (Number.isFinite(w) && w > 0 && reps > 0) {
+        volume = w * reps;
+      } else if (reps > 0) {
+        volume = reps * 10;
+      }
+
+      if (volume > 0) {
+        muscleVolume[muscle] = (muscleVolume[muscle] || 0) + volume;
+      }
+    }
+  }
+
+  const values = HEATMAP_MUSCLES.map((m) => muscleVolume[m] || 0);
+  const maxVol = Math.max(1, ...values);
+  const total = values.reduce((s, n) => s + n, 0);
+
+  const muscles = HEATMAP_MUSCLES.map((label) => ({
+    label,
+    volume: muscleVolume[label] || 0,
+    pct: (muscleVolume[label] || 0) / maxVol,
+  }));
+
+  const top3 = [...muscles]
+    .filter((m) => m.volume > 0)
+    .sort((a, b) => b.volume - a.volume)
+    .slice(0, 3);
+
+  return { muscles, top3, hasData: total > 0 };
+}
