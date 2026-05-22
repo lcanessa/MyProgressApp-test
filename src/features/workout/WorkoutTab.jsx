@@ -194,6 +194,25 @@ export default function WorkoutTab({ app }) {
                   className={`px-5 pb-5 border-t ${app.isDark ? 'border-white/5' : 'border-slate-100'} ${locked ? 'select-none' : ''}`}
                 >
                   <div className="space-y-3 mt-4">
+                    {/* Encabezado de columnas */}
+                    <div className="flex gap-3 items-center">
+                      <span className="w-8 shrink-0" />
+                      <span
+                        className={`flex-1 text-center text-[10px] font-black uppercase tracking-widest ${
+                          app.isDark ? 'text-slate-500' : 'text-slate-400'
+                        }`}
+                      >
+                        Kgs
+                      </span>
+                      <span
+                        className={`flex-1 text-center text-[10px] font-black uppercase tracking-widest ${
+                          app.isDark ? 'text-slate-500' : 'text-slate-400'
+                        }`}
+                      >
+                        Rep.
+                      </span>
+                    </div>
+
                     {Array.from({ length: numSets }, (_, setIdx) => {
                       const weightVal = formatWeightDisplay(sessions[`${wPrefix}-s${setIdx}-w`]);
                       const repsVal = normalizeSessionFieldValue(

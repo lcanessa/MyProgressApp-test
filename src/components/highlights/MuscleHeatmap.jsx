@@ -53,30 +53,42 @@ function getMuscleColors(muscles, isDark) {
   };
 }
 
-function BodyView({ src, blobs, colors, filterId, label, isDark }) {
+// Relación de aspecto fija para ambas imágenes → mismo tamaño en pantalla
+const BODY_ASPECT = '1 / 2.7';
+
+function BodyView({ src, blobs, colors, filterId }) {
   const [imgOk, setImgOk] = useState(true);
 
   return (
-    <div className="flex-1 flex flex-col items-center gap-2">
-      <div className="relative w-full">
+    <div className="flex-1">
+      {/* Contenedor de altura fija: ambas imágenes ocupan exactamente el mismo espacio */}
+      <div className="relative w-full" style={{ aspectRatio: BODY_ASPECT }}>
         {imgOk ? (
           <>
+            {/* object-contain + object-top para que la cabeza siempre quede arriba */}
             <img
               src={src}
-              alt={label}
-              className="w-full h-auto block select-none"
+              alt=""
+              className="absolute inset-0 w-full h-full object-contain object-top select-none"
               onError={() => setImgOk(false)}
               draggable={false}
             />
+            {/*
+              mask-size: contain + mask-position: top center replica exactamente
+              el comportamiento de object-contain object-top de la imagen,
+              así los blobs se recortan al contorno real sin desbordarse.
+            */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
                 maskImage: `url(${src})`,
                 WebkitMaskImage: `url(${src})`,
-                maskSize: '100% 100%',
-                WebkitMaskSize: '100% 100%',
+                maskSize: 'contain',
+                WebkitMaskSize: 'contain',
                 maskRepeat: 'no-repeat',
                 WebkitMaskRepeat: 'no-repeat',
+                maskPosition: 'top center',
+                WebkitMaskPosition: 'top center',
               }}
             >
               <svg
@@ -113,7 +125,7 @@ function BodyView({ src, blobs, colors, filterId, label, isDark }) {
             </div>
           </>
         ) : (
-          <div className="w-full aspect-[1/2.4] flex flex-col items-center justify-center gap-2 rounded-2xl bg-slate-800/40 border border-white/8">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-slate-800/40 border border-white/8">
             <ImageOff size={20} className="text-slate-500" />
             <span className="text-[9px] font-bold text-slate-500 text-center leading-tight px-2">
               Agregá<br />{src.replace('/', '')}<br />a /public
@@ -121,9 +133,6 @@ function BodyView({ src, blobs, colors, filterId, label, isDark }) {
           </div>
         )}
       </div>
-      <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-        {label}
-      </p>
     </div>
   );
 }
@@ -146,23 +155,19 @@ export default function MuscleHeatmap({ diary, routines, library, isDark }) {
 
   return (
     <div className="space-y-5">
-      {/* Cuerpos — sin card, ocupan todo el ancho */}
-      <div className="flex items-end gap-5">
+      {/* Cuerpos — sin card, ocupan todo el ancho, mismo tamaño garantizado por aspect-ratio fijo */}
+      <div className="flex gap-5">
         <BodyView
           src="/muscle-front.png"
           blobs={FRONT_BLOBS}
           colors={colors}
           filterId="blur-front"
-          label="Frente"
-          isDark={isDark}
         />
         <BodyView
           src="/muscle-back.png"
           blobs={BACK_BLOBS}
           colors={colors}
           filterId="blur-back"
-          label="Espalda"
-          isDark={isDark}
         />
       </div>
 
