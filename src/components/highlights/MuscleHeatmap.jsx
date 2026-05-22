@@ -1,14 +1,60 @@
-import { useMemo } from 'react';
-import { PersonStanding } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { PersonStanding, ImageOff } from 'lucide-react';
 import { buildMuscleHeatmap, muscleHeatColor, formatVolume } from '../../utils/highlights';
 import HighlightCardCornerFade from './HighlightCardCornerFade';
 
+// ─── Posiciones de los blobs en espacio 0-100 (% del ancho/alto de la imagen).
+// Ajustar las coordenadas una vez que tengas las PNGs en /public.
+const FRONT_BLOBS = [
+  // Pecho
+  { muscle: 'Pecho',   cx: 35, cy: 27, rx: 11, ry: 7 },
+  { muscle: 'Pecho',   cx: 65, cy: 27, rx: 11, ry: 7 },
+  // Hombros
+  { muscle: 'Hombros', cx: 18, cy: 22, rx: 7,  ry: 5 },
+  { muscle: 'Hombros', cx: 82, cy: 22, rx: 7,  ry: 5 },
+  // Brazos (bíceps)
+  { muscle: 'Brazos',  cx: 11, cy: 33, rx: 5,  ry: 10 },
+  { muscle: 'Brazos',  cx: 89, cy: 33, rx: 5,  ry: 10 },
+  // Core (abdominales)
+  { muscle: 'Core',    cx: 50, cy: 41, rx: 10, ry: 7  },
+  // Piernas (cuádriceps)
+  { muscle: 'Piernas', cx: 38, cy: 62, rx: 9,  ry: 11 },
+  { muscle: 'Piernas', cx: 62, cy: 62, rx: 9,  ry: 11 },
+  // Piernas (gemelos)
+  { muscle: 'Piernas', cx: 38, cy: 80, rx: 7,  ry: 7  },
+  { muscle: 'Piernas', cx: 62, cy: 80, rx: 7,  ry: 7  },
+];
+
+const BACK_BLOBS = [
+  // Hombros (deltoides posteriores)
+  { muscle: 'Hombros', cx: 18, cy: 22, rx: 7,  ry: 5  },
+  { muscle: 'Hombros', cx: 82, cy: 22, rx: 7,  ry: 5  },
+  // Espalda (trapecio)
+  { muscle: 'Espalda', cx: 50, cy: 25, rx: 14, ry: 5  },
+  // Espalda (dorsales)
+  { muscle: 'Espalda', cx: 34, cy: 34, rx: 8,  ry: 9  },
+  { muscle: 'Espalda', cx: 66, cy: 34, rx: 8,  ry: 9  },
+  // Espalda (lumbar)
+  { muscle: 'Espalda', cx: 50, cy: 43, rx: 9,  ry: 5  },
+  // Brazos (tríceps)
+  { muscle: 'Brazos',  cx: 11, cy: 33, rx: 5,  ry: 10 },
+  { muscle: 'Brazos',  cx: 89, cy: 33, rx: 5,  ry: 10 },
+  // Piernas (glúteos)
+  { muscle: 'Piernas', cx: 50, cy: 53, rx: 17, ry: 6  },
+  // Piernas (isquiotibiales)
+  { muscle: 'Piernas', cx: 38, cy: 64, rx: 9,  ry: 10 },
+  { muscle: 'Piernas', cx: 62, cy: 64, rx: 9,  ry: 10 },
+  // Piernas (gemelos)
+  { muscle: 'Piernas', cx: 38, cy: 80, rx: 7,  ry: 7  },
+  { muscle: 'Piernas', cx: 62, cy: 80, rx: 7,  ry: 7  },
+];
+
 const LEGEND = [
   { label: 'Sin trabajo', pct: 0 },
-  { label: 'Ligero', pct: 0.20 },
-  { label: 'Moderado', pct: 0.45 },
-  { label: 'Intenso', pct: 0.73 },
-  { label: 'Pico', pct: 1 },
+  { label: 'Ligero',      pct: 0.20 },
+  { label: 'Moderado',    pct: 0.45 },
+  { label: 'Intenso',     pct: 0.73 },
+  { label: 'Pico',        pct: 1    },
 ];
 
 function getMuscleColors(muscles, isDark) {
@@ -24,119 +70,76 @@ function getMuscleColors(muscles, isDark) {
   };
 }
 
-/* ─── VISTA FRONTAL ─── */
-function FrontBody({ c, neutral }) {
+/* ─── Vista del cuerpo: imagen PNG + blobs SVG superpuestos ─── */
+function BodyView({ src, blobs, colors, filterId, label }) {
+  const [imgOk, setImgOk] = useState(true);
+
   return (
-    <svg viewBox="0 0 90 196" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto drop-shadow-sm">
-      {/* Head */}
-      <ellipse cx="45" cy="13" rx="12" ry="13" fill={neutral} />
-      {/* Neck */}
-      <rect x="40" y="25" width="10" height="8" rx="3" fill={neutral} />
-
-      {/* Chest (Pecho) — drawn first so shoulders can overlap naturally */}
-      <path
-        d="M28 33 Q36 28 45 31 Q54 28 62 33 L62 53 Q54 57 45 56 Q36 57 28 53 Z"
-        fill={c.Pecho}
-      />
-      {/* Core (Abs) */}
-      <rect x="28" y="54" width="34" height="26" rx="5" fill={c.Core} />
-
-      {/* Left Bicep */}
-      <rect x="11" y="35" width="11" height="35" rx="5" fill={c.Brazos} />
-      {/* Right Bicep */}
-      <rect x="68" y="35" width="11" height="35" rx="5" fill={c.Brazos} />
-
-      {/* Left Shoulder cap — on top of bicep + chest edge */}
-      <ellipse cx="22" cy="41" rx="10" ry="7" fill={c.Hombros} />
-      {/* Right Shoulder cap */}
-      <ellipse cx="68" cy="41" rx="10" ry="7" fill={c.Hombros} />
-
-      {/* Left Forearm (neutral) */}
-      <rect x="11" y="72" width="9" height="27" rx="4" fill={neutral} />
-      {/* Right Forearm */}
-      <rect x="70" y="72" width="9" height="27" rx="4" fill={neutral} />
-
-      {/* Hips connector (neutral) */}
-      <rect x="24" y="81" width="42" height="13" rx="7" fill={neutral} />
-
-      {/* Left Quad */}
-      <rect x="25" y="96" width="17" height="43" rx="7" fill={c.Piernas} />
-      {/* Right Quad */}
-      <rect x="48" y="96" width="17" height="43" rx="7" fill={c.Piernas} />
-
-      {/* Left Calf */}
-      <rect x="26" y="142" width="14" height="36" rx="6" fill={c.Piernas} />
-      {/* Right Calf */}
-      <rect x="50" y="142" width="14" height="36" rx="6" fill={c.Piernas} />
-
-      {/* Feet (neutral) */}
-      <ellipse cx="33" cy="182" rx="10" ry="5" fill={neutral} />
-      <ellipse cx="57" cy="182" rx="10" ry="5" fill={neutral} />
-    </svg>
+    <div className="flex flex-col items-center gap-2 w-[44%] max-w-[140px]">
+      <div className="relative w-full overflow-hidden rounded-2xl isolation-isolate">
+        {imgOk ? (
+          <>
+            <img
+              src={src}
+              alt={label}
+              className="w-full h-auto block select-none"
+              onError={() => setImgOk(false)}
+              draggable={false}
+            />
+            {/* SVG de manchas — preserveAspectRatio="none" mapea coords 0-100 a % del contenedor */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <filter
+                  id={filterId}
+                  x="-60%"
+                  y="-60%"
+                  width="220%"
+                  height="220%"
+                  colorInterpolationFilters="sRGB"
+                >
+                  <feGaussianBlur stdDeviation="3.5" />
+                </filter>
+              </defs>
+              {blobs.map((b, i) => (
+                <ellipse
+                  key={i}
+                  cx={b.cx}
+                  cy={b.cy}
+                  rx={b.rx}
+                  ry={b.ry}
+                  fill={colors[b.muscle]}
+                  filter={`url(#${filterId})`}
+                  style={{ mixBlendMode: 'multiply', opacity: 0.72 }}
+                />
+              ))}
+            </svg>
+          </>
+        ) : (
+          <div className="w-full aspect-[1/2.4] flex flex-col items-center justify-center gap-2 rounded-2xl bg-slate-800/40 border border-white/8">
+            <ImageOff size={20} className="text-slate-500" />
+            <span className="text-[9px] font-bold text-slate-500 text-center leading-tight px-2">
+              Agregá<br />{src.replace('/', '')}<br />a /public
+            </span>
+          </div>
+        )}
+      </div>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+    </div>
   );
 }
 
-/* ─── VISTA POSTERIOR ─── */
-function BackBody({ c, neutral }) {
-  return (
-    <svg viewBox="0 0 90 196" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto drop-shadow-sm">
-      {/* Head */}
-      <ellipse cx="45" cy="13" rx="12" ry="13" fill={neutral} />
-      {/* Neck */}
-      <rect x="40" y="25" width="10" height="8" rx="3" fill={neutral} />
-
-      {/* Back (Espalda) — traps + lats + lumbar — full torso back */}
-      <path
-        d="M28 33 Q36 28 45 31 Q54 28 62 33 L62 80 Q54 84 45 83 Q36 84 28 80 Z"
-        fill={c.Espalda}
-      />
-
-      {/* Left Tricep */}
-      <rect x="11" y="35" width="11" height="35" rx="5" fill={c.Brazos} />
-      {/* Right Tricep */}
-      <rect x="68" y="35" width="11" height="35" rx="5" fill={c.Brazos} />
-
-      {/* Left Shoulder cap (rear delt) — on top */}
-      <ellipse cx="22" cy="41" rx="10" ry="7" fill={c.Hombros} />
-      {/* Right Shoulder cap */}
-      <ellipse cx="68" cy="41" rx="10" ry="7" fill={c.Hombros} />
-
-      {/* Left Forearm (neutral) */}
-      <rect x="11" y="72" width="9" height="27" rx="4" fill={neutral} />
-      {/* Right Forearm */}
-      <rect x="70" y="72" width="9" height="27" rx="4" fill={neutral} />
-
-      {/* Glutes (Piernas) — wider than waist */}
-      <path
-        d="M24 81 Q35 93 45 91 Q55 93 66 81 L66 107 Q55 112 45 110 Q35 112 24 107 Z"
-        fill={c.Piernas}
-      />
-
-      {/* Left Hamstring */}
-      <rect x="25" y="109" width="17" height="37" rx="7" fill={c.Piernas} />
-      {/* Right Hamstring */}
-      <rect x="48" y="109" width="17" height="37" rx="7" fill={c.Piernas} />
-
-      {/* Left Calf back */}
-      <rect x="26" y="149" width="14" height="29" rx="6" fill={c.Piernas} />
-      {/* Right Calf back */}
-      <rect x="50" y="149" width="14" height="29" rx="6" fill={c.Piernas} />
-
-      {/* Feet (neutral) */}
-      <ellipse cx="33" cy="182" rx="10" ry="5" fill={neutral} />
-      <ellipse cx="57" cy="182" rx="10" ry="5" fill={neutral} />
-    </svg>
-  );
-}
-
-/* ─── COMPONENTE PRINCIPAL ─── */
+/* ─── Componente principal ─── */
 export default function MuscleHeatmap({ diary, routines, library, isDark }) {
   const data = useMemo(
     () => buildMuscleHeatmap(diary, routines, library),
     [diary, routines, library]
   );
 
-  const neutral = isDark ? '#1e293b' : '#e2e8f0';
   const colors = getMuscleColors(data.muscles, isDark);
 
   return (
@@ -173,39 +176,53 @@ export default function MuscleHeatmap({ diary, routines, library, isDark }) {
       <div className="relative p-5 space-y-5">
         {!data.hasData ? (
           <p className={`text-center text-sm font-medium py-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            Registrá series con peso o repeticiones para ver tu mapa muscular.
+            Registrá series con peso para ver tu mapa muscular.
           </p>
         ) : (
           <>
-            {/* Cuerpos SVG frente / espalda */}
+            {/* Cuerpos: imagen PNG + manchas SVG */}
             <div className="flex justify-center gap-6">
-              <div className="flex flex-col items-center gap-1.5 w-[42%] max-w-[120px]">
-                <FrontBody c={colors} neutral={neutral} />
-                <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Frente
-                </p>
-              </div>
-              <div className="flex flex-col items-center gap-1.5 w-[42%] max-w-[120px]">
-                <BackBody c={colors} neutral={neutral} />
-                <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Espalda
-                </p>
-              </div>
+              <BodyView
+                src="/muscle-front.png"
+                blobs={FRONT_BLOBS}
+                colors={colors}
+                filterId="blur-front"
+                label="Frente"
+              />
+              <BodyView
+                src="/muscle-back.png"
+                blobs={BACK_BLOBS}
+                colors={colors}
+                filterId="blur-back"
+                label="Espalda"
+              />
             </div>
 
-            {/* Leyenda de colores */}
-            <div className={`rounded-2xl px-4 py-3 border ${isDark ? 'bg-white/5 border-white/8' : 'bg-slate-50 border-slate-200'}`}>
-              <p className={`text-[10px] font-black uppercase tracking-widest mb-2.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            {/* Leyenda */}
+            <div
+              className={`rounded-2xl px-4 py-3 border ${
+                isDark ? 'bg-white/5 border-white/8' : 'bg-slate-50 border-slate-200'
+              }`}
+            >
+              <p
+                className={`text-[10px] font-black uppercase tracking-widest mb-2.5 ${
+                  isDark ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
                 Leyenda
               </p>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex flex-wrap gap-x-3 gap-y-1.5">
                 {LEGEND.map(({ label, pct }) => (
                   <div key={label} className="flex items-center gap-1.5">
                     <div
                       className="w-3 h-3 rounded-full shrink-0"
                       style={{ backgroundColor: muscleHeatColor(pct, isDark) }}
                     />
-                    <span className={`text-[10px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <span
+                      className={`text-[10px] font-semibold ${
+                        isDark ? 'text-slate-400' : 'text-slate-500'
+                      }`}
+                    >
                       {label}
                     </span>
                   </div>
@@ -215,13 +232,21 @@ export default function MuscleHeatmap({ diary, routines, library, isDark }) {
 
             {/* Top 3 músculos */}
             {data.top3.length > 0 && (
-              <div className="space-y-2">
-                <p className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-amber-400/90' : 'text-amber-600'}`}>
+              <div className="space-y-2.5">
+                <p
+                  className={`text-[10px] font-black uppercase tracking-widest ${
+                    isDark ? 'text-amber-400/90' : 'text-amber-600'
+                  }`}
+                >
                   Más trabajados
                 </p>
                 {data.top3.map((m, i) => (
                   <div key={m.label} className="flex items-center gap-2.5">
-                    <span className={`text-[11px] font-black w-4 shrink-0 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                    <span
+                      className={`text-[11px] font-black w-4 shrink-0 tabular-nums ${
+                        isDark ? 'text-slate-600' : 'text-slate-400'
+                      }`}
+                    >
                       {i + 1}
                     </span>
                     <div
@@ -229,15 +254,20 @@ export default function MuscleHeatmap({ diary, routines, library, isDark }) {
                       style={{ backgroundColor: muscleHeatColor(m.pct, isDark) }}
                     />
                     <div className="flex-1 flex items-center gap-2 min-w-0">
-                      <span className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                      <span
+                        className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}
+                        style={{ minWidth: '5rem' }}
+                      >
                         {m.label}
                       </span>
                       <div
                         className="flex-1 h-1.5 rounded-full overflow-hidden"
-                        style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0' }}
+                        style={{
+                          backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0',
+                        }}
                       >
                         <div
-                          className="h-full rounded-full"
+                          className="h-full rounded-full transition-all duration-500"
                           style={{
                             width: `${Math.round(m.pct * 100)}%`,
                             backgroundColor: muscleHeatColor(m.pct, isDark),
@@ -245,7 +275,11 @@ export default function MuscleHeatmap({ diary, routines, library, isDark }) {
                         />
                       </div>
                     </div>
-                    <span className={`text-[11px] font-black tabular-nums shrink-0 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <span
+                      className={`text-[11px] font-black tabular-nums shrink-0 ${
+                        isDark ? 'text-slate-400' : 'text-slate-500'
+                      }`}
+                    >
                       {formatVolume(m.volume)}
                     </span>
                   </div>

@@ -1,4 +1,4 @@
-import { Dumbbell, ClipboardList, List, Settings, Crown } from 'lucide-react';
+import { Dumbbell, ClipboardList, List, Settings, Crown, PersonStanding } from 'lucide-react';
 
 export default function BottomNav({ app }) {
   return (
@@ -15,6 +15,7 @@ export default function BottomNav({ app }) {
           { id: 'workout', icon: <Dumbbell size={20} strokeWidth={2.5} /> },
           { id: 'edit', icon: <ClipboardList size={20} strokeWidth={2.5} /> },
           { id: 'library', icon: <List size={20} strokeWidth={2.5} /> },
+          { id: 'body', icon: <PersonStanding size={20} strokeWidth={2.5} /> },
           { id: 'settings', icon: <Settings size={20} strokeWidth={2.5} /> },
         ].map((tab) => {
           const isActive = app.activeTab === tab.id;

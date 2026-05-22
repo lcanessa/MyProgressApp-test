@@ -1,4 +1,4 @@
-import { Sun, Moon, CalendarDays, ClipboardList, List, Settings } from 'lucide-react';
+import { Sun, Moon, CalendarDays, ClipboardList, List, Settings, PersonStanding } from 'lucide-react';
 import MyProgressLogo from '../brand/MyProgressLogo';
 import TabPageTitle from './TabPageTitle';
 import DayCalendarStrip from './DayCalendarStrip';
@@ -69,6 +69,19 @@ export default function AppHeader({ app }) {
             icon={List}
             title="Ejercicios"
             subtitle="Catálogo y videos de referencia"
+            isDark={app.isDark}
+            className="mb-0"
+            glass
+          />
+        </div>
+      )}
+
+      {app.activeTab === 'body' && (
+        <div className="px-4 pb-3">
+          <TabPageTitle
+            icon={PersonStanding}
+            title="Mapa muscular"
+            subtitle="Volumen histórico por grupo muscular"
             isDark={app.isDark}
             className="mb-0"
             glass

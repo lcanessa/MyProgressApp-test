@@ -16,8 +16,6 @@ import Last7DaysStrip from '../../components/highlights/Last7DaysStrip';
 import PersonalRecordsCard from '../../components/highlights/PersonalRecordsCard';
 import HomeGreeting from '../../components/highlights/HomeGreeting';
 import MuscleRadarChart from '../../components/highlights/MuscleRadarChart';
-import MuscleHeatmap from '../../components/highlights/MuscleHeatmap';
-
 export default function HighlightsTab({ app }) {
   const stats = useMemo(
     () => computeHighlights({ diary: app.diary, routines: app.routines, library: app.library }),
@@ -148,13 +146,6 @@ export default function HighlightsTab({ app }) {
           accent="purple"
         />
       </div>
-
-      <MuscleHeatmap
-        diary={app.diary}
-        routines={app.routines}
-        library={app.library}
-        isDark={isDark}
-      />
 
       <WeeklyActivityChart weeks={stats.weeklyActivity} maxDays={stats.maxWeekDays} isDark={isDark} />
     </div>

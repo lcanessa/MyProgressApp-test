@@ -343,10 +343,10 @@ export function buildMuscleHeatmap(diary, routines, library) {
       const reps = Number.isFinite(r) && r > 0 ? r : 0;
 
       let volume = 0;
-      if (Number.isFinite(w) && w > 0 && reps > 0) {
-        volume = w * reps;
+      if (Number.isFinite(w) && w > 0) {
+        volume = w;
       } else if (reps > 0) {
-        volume = reps * 10;
+        volume = reps;
       }
 
       if (volume > 0) {
