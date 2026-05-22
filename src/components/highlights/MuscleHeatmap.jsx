@@ -141,12 +141,14 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
     const stats = {};
     MUSCLE_GROUPS_LIST.forEach(m => { stats[m] = 0; });
 
-    const todayObj = new Date(selectedDate);
-    todayObj.setDate(todayObj.getDate() - 30);
-    const cutoffDateStr = todayObj.toISOString().split('T')[0];
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const cutoffObj = new Date(now);
+    cutoffObj.setDate(cutoffObj.getDate() - 30);
+    const cutoffDateStr = cutoffObj.toISOString().split('T')[0];
 
     Object.keys(diary).forEach(dateStr => {
-      if (dateStr < cutoffDateStr || dateStr > selectedDate) return;
+      if (dateStr < cutoffDateStr || dateStr > todayStr) return;
 
       const dayData = diary[dateStr];
       if (!dayData || !dayData.sessions) return;
