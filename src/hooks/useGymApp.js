@@ -90,7 +90,6 @@ const [selectedDate, setSelectedDate] = useState(() => toLocalISODate(new Date()
 const [isDark, setIsDarkState] = useState(() => {
 const saved = localStorage.getItem(STORAGE_KEYS.THEME);
 if (saved !== null) return JSON.parse(saved);
-if (typeof window !== 'undefined' && window.matchMedia) return window.matchMedia('(prefers-color-scheme: dark)').matches;
 return true;
 });
 
