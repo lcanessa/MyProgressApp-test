@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Download, Upload, RefreshCw } from 'lucide-react';
+import { Download, Upload, RefreshCw, Sun, Moon } from 'lucide-react';
 import { APP_VERSION_LABEL } from '../../constants/appVersion';
 
 export default function SettingsTab({ app, pwaUpdate }) {
@@ -9,6 +9,45 @@ export default function SettingsTab({ app, pwaUpdate }) {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
+
+      {/* Tema */}
+      <section
+        className={`rounded-3xl border p-5 ${app.isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200'}`}
+      >
+        <h3 className={`font-black tracking-widest text-xs mb-4 ${app.isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+          APARIENCIA
+        </h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-xl ${app.isDark ? 'bg-white/8 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+              {app.isDark ? <Moon size={18} /> : <Sun size={18} />}
+            </div>
+            <div>
+              <p className={`text-sm font-bold ${app.isDark ? 'text-white' : 'text-slate-800'}`}>
+                Modo {app.isDark ? 'oscuro' : 'claro'}
+              </p>
+              <p className={`text-[11px] font-medium ${app.isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                Cambiá el tema de la app
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => app.setIsDark(!app.isDark)}
+            className={`relative w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none ${
+              app.isDark ? 'bg-purple-600' : 'bg-slate-200'
+            }`}
+            aria-label="Alternar tema"
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 ${
+                app.isDark ? 'translate-x-6' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+      </section>
+
       <section
         className={`rounded-3xl border p-5 flex flex-col gap-4 ${app.isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200'}`}
       >
