@@ -53,8 +53,9 @@ function getMuscleColors(muscles, isDark) {
   };
 }
 
-// Relación de aspecto fija para ambas imágenes → mismo tamaño en pantalla
-const BODY_ASPECT = '1 / 2.7';
+// Relación de aspecto basada en las dimensiones reales de las PNGs
+// front: 388×643 (1.66) · back: 380×657 (1.73) → usamos la más alta para que ambas encajen
+const BODY_ASPECT = '1 / 1.73';
 
 function BodyView({ src, blobs, colors, filterId }) {
   const [imgOk, setImgOk] = useState(true);
