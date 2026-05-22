@@ -316,13 +316,15 @@ export function buildMuscleHeatmap(diary, routines, library, selectedDate) {
   const libById = Object.fromEntries(library.map((ex) => [ex.id, ex]));
   const muscleSets = {};
 
-  const refDate = selectedDate || toLocalISODate(new Date());
-  const cutoff = new Date(`${refDate}T12:00:00`);
+  // La ventana siempre termina HOY (independiente de la fecha seleccionada en el workout).
+  // selectedDate solo se recibe para que el caller pueda usarlo como dependencia de useMemo.
+  const todayStr = toLocalISODate(new Date());
+  const cutoff = new Date(`${todayStr}T12:00:00`);
   cutoff.setDate(cutoff.getDate() - 29); // ventana de 30 días inclusive
   const cutoffStr = toLocalISODate(cutoff);
 
   for (const [dateStr, day] of Object.entries(diary)) {
-    if (dateStr < cutoffStr || dateStr > refDate) continue;
+    if (dateStr < cutoffStr || dateStr > todayStr) continue;
     const rid = day?.routineId;
     if (!rid) continue;
     const exercises = routines[rid] || [];
