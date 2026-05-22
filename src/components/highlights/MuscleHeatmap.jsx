@@ -95,6 +95,7 @@ function BodyView({ src, blobs, colors, filterId }) {
                 viewBox="0 0 100 100"
                 preserveAspectRatio="none"
                 xmlns="http://www.w3.org/2000/svg"
+                style={{ mixBlendMode: 'overlay' }}
               >
                 <defs>
                   <filter
@@ -105,7 +106,7 @@ function BodyView({ src, blobs, colors, filterId }) {
                     height="220%"
                     colorInterpolationFilters="sRGB"
                   >
-                    <feGaussianBlur stdDeviation="3.5" />
+                    <feGaussianBlur stdDeviation="4" />
                   </filter>
                 </defs>
                 {blobs.map((b, i) => (
@@ -117,7 +118,7 @@ function BodyView({ src, blobs, colors, filterId }) {
                     ry={b.ry}
                     fill={colors[b.muscle]}
                     filter={`url(#${filterId})`}
-                    opacity={0.68}
+                    opacity={0.92}
                   />
                 ))}
               </svg>
