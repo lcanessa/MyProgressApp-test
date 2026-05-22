@@ -155,24 +155,25 @@ export default function MuscleHeatmap({ diary, routines, library, isDark }) {
 
   return (
     <div className="space-y-5">
-      {/* Cuerpos — sin card, ocupan todo el ancho, mismo tamaño garantizado por aspect-ratio fijo */}
-      <div className="flex gap-5">
-        <BodyView
-          src="/muscle-front.png"
-          blobs={FRONT_BLOBS}
-          colors={colors}
-          filterId="blur-front"
-        />
-        <BodyView
-          src="/muscle-back.png"
-          blobs={BACK_BLOBS}
-          colors={colors}
-          filterId="blur-back"
-        />
-      </div>
+      {/* Cuerpos + leyenda juntos */}
+      <div className="space-y-2">
+        <div className="flex gap-5">
+          <BodyView
+            src="/muscle-front.png"
+            blobs={FRONT_BLOBS}
+            colors={colors}
+            filterId="blur-front"
+          />
+          <BodyView
+            src="/muscle-back.png"
+            blobs={BACK_BLOBS}
+            colors={colors}
+            filterId="blur-back"
+          />
+        </div>
 
-      {/* Leyenda — una fila sin título */}
-      <div className="flex justify-between">
+        {/* Leyenda — pegada debajo de las imágenes */}
+        <div className="flex justify-between">
         {LEGEND.map(({ label, pct }) => (
           <div key={label} className="flex items-center gap-1">
             <div
@@ -184,6 +185,7 @@ export default function MuscleHeatmap({ diary, routines, library, isDark }) {
             </span>
           </div>
         ))}
+        </div>
       </div>
 
       {/* Top 3 músculos */}
