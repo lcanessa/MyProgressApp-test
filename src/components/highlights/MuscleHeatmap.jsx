@@ -147,10 +147,6 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
     cutoffObj.setDate(cutoffObj.getDate() - 30);
     const cutoffDateStr = cutoffObj.toISOString().split('T')[0];
 
-    console.log('[Heatmap] todayStr:', todayStr, '| cutoff:', cutoffDateStr);
-    console.log('[Heatmap] diary keys:', Object.keys(diary));
-    console.log('[Heatmap] today sessions:', diary[todayStr]?.sessions);
-
     Object.keys(diary).forEach(dateStr => {
       if (dateStr < cutoffDateStr || dateStr > todayStr) return;
 
@@ -167,6 +163,12 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
         const exIdx = parseInt(parts[1], 10);
         const sIdxStr = parts[2];
 
+        // Solo contar sets de ejercicios explícitamente marcados como completados.
+        // Esto evita que los datos pre-rellenados (de sesiones anteriores) se cuenten
+        // antes de que el usuario haya hecho el ejercicio hoy.
+        const completedKey = `${rId}-${exIdx}`;
+        if (!dayData.completed?.[completedKey]) return;
+
         const valNum = parseFloat(value);
         if (isNaN(valNum) || valNum <= 0) return;
 
@@ -179,21 +181,16 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
           if (routineEx) {
             const libEx = library.find(l => l.id === routineEx.exId || l.name === routineEx.customName);
             const muscleName = libEx ? libEx.muscle : 'Otro';
-            console.log('[Heatmap] key:', key, '| rId:', rId, '| exIdx:', exIdx, '| routineEx:', routineEx, '| libEx:', libEx, '| muscle:', muscleName);
 
             if (stats[muscleName] !== undefined) {
               stats[muscleName] += 1;
             } else {
               stats['Otro'] += 1;
             }
-          } else {
-            console.log('[Heatmap] routineEx NOT FOUND → rId:', rId, 'exIdx:', exIdx, '| routines[rId]:', routines[rId]);
           }
         }
       });
     });
-
-    console.log('[Heatmap] stats result:', { ...stats });
     const sortedStats = Object.entries(stats).sort((a, b) => b[1] - a[1]);
     const maxSets = sortedStats[0][1] || 1;
 
