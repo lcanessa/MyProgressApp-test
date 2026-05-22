@@ -147,6 +147,10 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
     cutoffObj.setDate(cutoffObj.getDate() - 30);
     const cutoffDateStr = cutoffObj.toISOString().split('T')[0];
 
+    console.log('[Heatmap] todayStr:', todayStr, '| cutoff:', cutoffDateStr);
+    console.log('[Heatmap] diary keys:', Object.keys(diary));
+    console.log('[Heatmap] today sessions:', diary[todayStr]?.sessions);
+
     Object.keys(diary).forEach(dateStr => {
       if (dateStr < cutoffDateStr || dateStr > todayStr) return;
 
@@ -186,6 +190,7 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
       });
     });
 
+    console.log('[Heatmap] stats result:', { ...stats });
     const sortedStats = Object.entries(stats).sort((a, b) => b[1] - a[1]);
     const maxSets = sortedStats[0][1] || 1;
 
