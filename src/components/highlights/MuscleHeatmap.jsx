@@ -70,15 +70,16 @@ function getMuscleColors(muscles, isDark) {
   };
 }
 
-/* ─── Vista del cuerpo: imagen PNG + blobs SVG superpuestos ─── */
+/* ─── Vista del cuerpo: imagen PNG (fondo transparente) + blobs SVG enmascarados ─── */
 function BodyView({ src, blobs, colors, filterId, label }) {
   const [imgOk, setImgOk] = useState(true);
 
   return (
     <div className="flex flex-col items-center gap-2 w-[44%] max-w-[140px]">
-      <div className="relative w-full overflow-hidden rounded-2xl isolation-isolate">
+      <div className="relative w-full">
         {imgOk ? (
           <>
+            {/* Imagen base con fondo transparente */}
             <img
               src={src}
               alt={label}
@@ -86,38 +87,54 @@ function BodyView({ src, blobs, colors, filterId, label }) {
               onError={() => setImgOk(false)}
               draggable={false}
             />
-            {/* SVG de manchas — preserveAspectRatio="none" mapea coords 0-100 a % del contenedor */}
-            <svg
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              xmlns="http://www.w3.org/2000/svg"
+            {/*
+              Capa de manchas de calor.
+              mask-image recorta los blobs exactamente al contorno del cuerpo,
+              evitando que "sangren" fuera de la silueta en el fondo transparente.
+            */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                maskImage: `url(${src})`,
+                WebkitMaskImage: `url(${src})`,
+                maskSize: '100% 100%',
+                WebkitMaskSize: '100% 100%',
+                maskRepeat: 'no-repeat',
+                WebkitMaskRepeat: 'no-repeat',
+              }}
             >
-              <defs>
-                <filter
-                  id={filterId}
-                  x="-60%"
-                  y="-60%"
-                  width="220%"
-                  height="220%"
-                  colorInterpolationFilters="sRGB"
-                >
-                  <feGaussianBlur stdDeviation="3.5" />
-                </filter>
-              </defs>
-              {blobs.map((b, i) => (
-                <ellipse
-                  key={i}
-                  cx={b.cx}
-                  cy={b.cy}
-                  rx={b.rx}
-                  ry={b.ry}
-                  fill={colors[b.muscle]}
-                  filter={`url(#${filterId})`}
-                  style={{ mixBlendMode: 'multiply', opacity: 0.72 }}
-                />
-              ))}
-            </svg>
+              <svg
+                className="w-full h-full"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <defs>
+                  <filter
+                    id={filterId}
+                    x="-60%"
+                    y="-60%"
+                    width="220%"
+                    height="220%"
+                    colorInterpolationFilters="sRGB"
+                  >
+                    <feGaussianBlur stdDeviation="3.5" />
+                  </filter>
+                </defs>
+                {blobs.map((b, i) => (
+                  <ellipse
+                    key={i}
+                    cx={b.cx}
+                    cy={b.cy}
+                    rx={b.rx}
+                    ry={b.ry}
+                    fill={colors[b.muscle]}
+                    filter={`url(#${filterId})`}
+                    opacity={0.68}
+                  />
+                ))}
+              </svg>
+            </div>
           </>
         ) : (
           <div className="w-full aspect-[1/2.4] flex flex-col items-center justify-center gap-2 rounded-2xl bg-slate-800/40 border border-white/8">
