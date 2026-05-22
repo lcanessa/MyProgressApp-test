@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { ImageOff } from 'lucide-react';
-import { buildMuscleHeatmap, muscleHeatColor } from '../../utils/highlights';
+import { muscleHeatColor } from '../../utils/highlights';
+
+const MUSCLE_GROUPS_LIST = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Cardio', 'Otro'];
 
 const FRONT_BLOBS = [
   { muscle: 'Pecho',   cx: 35, cy: 27, rx: 11, ry: 7  },
@@ -42,8 +44,11 @@ const LEGEND = [
 
 const formatSets = (n) => n === 1 ? '1 serie' : `${n} series`;
 
-function getMuscleColors(muscles, isDark) {
-  const map = Object.fromEntries(muscles.map((m) => [m.label, muscleHeatColor(m.pct, isDark)]));
+function getMuscleColors(muscleStats, isDark) {
+  const map = {};
+  muscleStats.forEach(({ muscle, percentage }) => {
+    map[muscle] = muscleHeatColor(percentage / 100, isDark);
+  });
   const base = muscleHeatColor(0, isDark);
   return {
     Pecho:   map.Pecho   || base,
@@ -55,8 +60,6 @@ function getMuscleColors(muscles, isDark) {
   };
 }
 
-// Relación de aspecto basada en las dimensiones reales de las PNGs
-// front: 388×643 (1.66) · back: 380×657 (1.73) → usamos la más alta para que ambas encajen
 const BODY_ASPECT = '1 / 1.73';
 
 function BodyView({ src, blobs, colors, filterId }) {
@@ -64,11 +67,9 @@ function BodyView({ src, blobs, colors, filterId }) {
 
   return (
     <div className="flex-1">
-      {/* Contenedor de altura fija: ambas imágenes ocupan exactamente el mismo espacio */}
       <div className="relative w-full" style={{ aspectRatio: BODY_ASPECT }}>
         {imgOk ? (
           <>
-            {/* object-contain + object-top para que la cabeza siempre quede arriba */}
             <img
               src={src}
               alt=""
@@ -76,11 +77,6 @@ function BodyView({ src, blobs, colors, filterId }) {
               onError={() => setImgOk(false)}
               draggable={false}
             />
-            {/*
-              mask-size: contain + mask-position: top center replica exactamente
-              el comportamiento de object-contain object-top de la imagen,
-              así los blobs se recortan al contorno real sin desbordarse.
-            */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
@@ -141,14 +137,73 @@ function BodyView({ src, blobs, colors, filterId }) {
 }
 
 export default function MuscleHeatmap({ diary, routines, library, isDark, selectedDate }) {
-  const data = useMemo(
-    () => buildMuscleHeatmap(diary, routines, library, selectedDate),
-    [diary, routines, library, selectedDate]
-  );
+  const muscleStats = useMemo(() => {
+    const stats = {};
+    MUSCLE_GROUPS_LIST.forEach(m => { stats[m] = 0; });
 
-  const colors = getMuscleColors(data.muscles, isDark);
+    const todayObj = new Date(selectedDate);
+    todayObj.setDate(todayObj.getDate() - 30);
+    const cutoffDateStr = todayObj.toISOString().split('T')[0];
 
-  if (!data.hasData) {
+    Object.keys(diary).forEach(dateStr => {
+      if (dateStr < cutoffDateStr || dateStr > selectedDate) return;
+
+      const dayData = diary[dateStr];
+      if (!dayData || !dayData.sessions) return;
+
+      const countedSets = new Set();
+
+      Object.entries(dayData.sessions).forEach(([key, value]) => {
+        const parts = key.split('-');
+        if (parts.length < 4) return;
+
+        const rId = parts[0];
+        const exIdx = parseInt(parts[1], 10);
+        const sIdxStr = parts[2];
+
+        const valNum = parseFloat(value);
+        if (isNaN(valNum) || valNum <= 0) return;
+
+        const uniqueSetId = `${dateStr}-${rId}-${exIdx}-${sIdxStr}`;
+
+        if (!countedSets.has(uniqueSetId)) {
+          countedSets.add(uniqueSetId);
+
+          const routineEx = routines[rId]?.[exIdx];
+          if (routineEx) {
+            const libEx = library.find(l => l.id === routineEx.exId || l.name === routineEx.customName);
+            const muscleName = libEx ? libEx.muscle : 'Otro';
+
+            if (stats[muscleName] !== undefined) {
+              stats[muscleName] += 1;
+            } else {
+              stats['Otro'] += 1;
+            }
+          }
+        }
+      });
+    });
+
+    const sortedStats = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+    const maxSets = sortedStats[0][1] || 1;
+
+    return sortedStats.map(([muscle, totalSets]) => {
+      const percentage = (totalSets / maxSets) * 100;
+      let colorLevel = 0;
+      if (totalSets > 0) {
+        if (percentage <= 30) colorLevel = 1;
+        else if (percentage <= 60) colorLevel = 2;
+        else if (percentage <= 85) colorLevel = 3;
+        else colorLevel = 4;
+      }
+      return { muscle, totalSets, percentage, colorLevel };
+    });
+  }, [diary, routines, library, selectedDate]);
+
+  const colors = getMuscleColors(muscleStats, isDark);
+  const hasData = muscleStats.some(m => m.totalSets > 0);
+
+  if (!hasData) {
     return (
       <p className={`text-center text-sm font-medium py-8 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
         Registrá series con peso para ver tu mapa muscular.
@@ -158,7 +213,6 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
 
   return (
     <div className="space-y-5">
-      {/* Cuerpos + leyenda juntos */}
       <div className="space-y-2">
         <div className="flex gap-5">
           <BodyView
@@ -175,23 +229,21 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
           />
         </div>
 
-        {/* Leyenda — pegada debajo de las imágenes */}
         <div className="flex justify-between">
-        {LEGEND.map(({ label, pct }) => (
-          <div key={label} className="flex items-center gap-1">
-            <div
-              className="w-2 h-2 rounded-full shrink-0"
-              style={{ backgroundColor: muscleHeatColor(pct, isDark) }}
-            />
-            <span className={`text-[9px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              {label}
-            </span>
-          </div>
-        ))}
+          {LEGEND.map(({ label, pct }) => (
+            <div key={label} className="flex items-center gap-1">
+              <div
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ backgroundColor: muscleHeatColor(pct, isDark) }}
+              />
+              <span className={`text-[9px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                {label}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Todos los grupos musculares ordenados por series — últimos 30 días */}
       <div
         className={`rounded-2xl px-4 py-3.5 space-y-2.5 ${
           isDark ? 'bg-white/5' : 'bg-slate-50 border border-slate-200'
@@ -204,8 +256,8 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
         >
           Últimos 30 días
         </p>
-        {data.sorted.map((m, i) => (
-          <div key={m.label} className="flex items-center gap-2.5">
+        {muscleStats.map((m, i) => (
+          <div key={m.muscle} className="flex items-center gap-2.5">
             <span
               className={`text-[11px] font-black w-4 shrink-0 tabular-nums ${
                 isDark ? 'text-slate-600' : 'text-slate-400'
@@ -215,14 +267,14 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
             </span>
             <div
               className="w-2.5 h-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: muscleHeatColor(m.pct, isDark) }}
+              style={{ backgroundColor: muscleHeatColor(m.percentage / 100, isDark) }}
             />
             <div className="flex-1 flex items-center gap-2 min-w-0">
               <span
                 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}
                 style={{ minWidth: '4.5rem' }}
               >
-                {m.label}
+                {m.muscle}
               </span>
               <div
                 className="flex-1 h-1.5 rounded-full overflow-hidden"
@@ -231,20 +283,20 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
-                    width: `${Math.round(m.pct * 100)}%`,
-                    backgroundColor: muscleHeatColor(m.pct, isDark),
+                    width: `${Math.round(m.percentage)}%`,
+                    backgroundColor: muscleHeatColor(m.percentage / 100, isDark),
                   }}
                 />
               </div>
             </div>
             <span
               className={`text-[11px] font-black tabular-nums shrink-0 ${
-                m.sets === 0
+                m.totalSets === 0
                   ? isDark ? 'text-slate-600' : 'text-slate-400'
                   : isDark ? 'text-slate-300' : 'text-slate-600'
               }`}
             >
-              {m.sets === 0 ? '—' : formatSets(m.sets)}
+              {m.totalSets === 0 ? '—' : formatSets(m.totalSets)}
             </span>
           </div>
         ))}
