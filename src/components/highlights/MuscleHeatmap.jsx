@@ -179,12 +179,15 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
           if (routineEx) {
             const libEx = library.find(l => l.id === routineEx.exId || l.name === routineEx.customName);
             const muscleName = libEx ? libEx.muscle : 'Otro';
+            console.log('[Heatmap] key:', key, '| rId:', rId, '| exIdx:', exIdx, '| routineEx:', routineEx, '| libEx:', libEx, '| muscle:', muscleName);
 
             if (stats[muscleName] !== undefined) {
               stats[muscleName] += 1;
             } else {
               stats['Otro'] += 1;
             }
+          } else {
+            console.log('[Heatmap] routineEx NOT FOUND → rId:', rId, 'exIdx:', exIdx, '| routines[rId]:', routines[rId]);
           }
         }
       });
