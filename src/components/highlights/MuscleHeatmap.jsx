@@ -8,20 +8,17 @@ import { muscleHeatColor } from '../../utils/highlights';
 
 const MUSCLE_GROUPS_LIST = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Cardio', 'Otro'];
 
-// Colores por nivel de entrenamiento
 const LEVEL_COLORS = ['#475569', '#22c55e', '#eab308', '#f97316', '#dc2626'];
 
-// Mapa de keywords → grupo muscular.
-// Si el modelo tiene meshes con nombres descriptivos (ej: "chest", "bicep"),
-// se mapean automáticamente. El modelo actual tiene nombres genéricos (Object_N),
-// por lo que se aplica el color global a todo el modelo.
+// ── Mapping: keyword (lowercase) → grupo muscular de la app ──────────────────
+// Cuando veamos los nombres reales del modelo (via console.log), completamos aquí.
 const MUSCLE_KEYWORDS = {
-  Pecho:   ['pecho', 'chest', 'pectoral', 'pect'],
-  Espalda: ['espalda', 'back', 'lat', 'dorsal', 'trap'],
-  Piernas: ['pierna', 'leg', 'quad', 'hamstring', 'glute', 'calf'],
-  Hombros: ['hombro', 'shoulder', 'delt'],
-  Brazos:  ['brazo', 'arm', 'bicep', 'tricep', 'forearm'],
-  Core:    ['core', 'abs', 'abdom', 'oblique'],
+  Pecho:   ['pecto', 'pectoral', 'chest', 'pecho'],
+  Espalda: ['espalda', 'dorsal', 'latissimus', 'lat_', 'trapezius', 'trap', 'back', 'rhomboid', 'teres'],
+  Piernas: ['leg', 'pierna', 'quad', 'femor', 'hamstring', 'glute', 'gluteus', 'calf', 'gastro', 'soleus', 'tibial'],
+  Hombros: ['hombro', 'shoulder', 'delt', 'deltoid'],
+  Brazos:  ['brazo', 'arm', 'bicep', 'tricep', 'brachial', 'forearm', 'antebra'],
+  Core:    ['core', 'abs', 'abdom', 'oblique', 'rectus_ab', 'transverse'],
 };
 
 const LEGEND = [
@@ -36,7 +33,7 @@ const formatSets = (n) => n === 1 ? '1 serie' : `${n} series`;
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
-function getMuscleFromMeshName(name) {
+function getMuscleFromNodeName(name) {
   const lower = name.toLowerCase();
   for (const [muscle, keywords] of Object.entries(MUSCLE_KEYWORDS)) {
     if (keywords.some((kw) => lower.includes(kw))) return muscle;
@@ -47,91 +44,80 @@ function getMuscleFromMeshName(name) {
 // ─── Modelo 3D ─────────────────────────────────────────────────────────────────
 
 function HumanModel({ muscleStats, isDark }) {
-  const { scene } = useGLTF('/scene.gltf');
-  const clonedScene = useMemo(() => scene.clone(true), [scene]);
-  const materialsRef = useRef([]);
+  const { nodes, scene } = useGLTF('/male_body_anatomy.glb');
+  const matsRef = useRef(new Map()); // nodeName → cloned material
 
-  // Construir lookup muscle → colorLevel
-  const statsByMuscle = useMemo(
-    () => Object.fromEntries(muscleStats.map((m) => [m.muscle, m])),
-    [muscleStats],
-  );
-
-  // Color global = nivel del músculo más trabajado (fallback cuando no hay nombres)
-  const globalLevel = useMemo(
-    () => Math.max(0, ...muscleStats.map((m) => m.colorLevel)),
-    [muscleStats],
-  );
-
-  // Primera pasada: clonar materiales y guardar referencias
+  // Loguear todos los nodos disponibles (solo en dev) para ajustar el mapping
   useEffect(() => {
-    const mats = [];
-    clonedScene.traverse((child) => {
-      if (!child.isMesh || !child.material) return;
-      const mat = new THREE.MeshStandardMaterial({
-        metalness: 0.08,
-        roughness: 0.65,
-        side: THREE.DoubleSide,
-      });
-      child.material = mat;
-      mats.push({ mesh: child, mat });
+    const meshNames = Object.entries(nodes)
+      .filter(([, n]) => n.isMesh)
+      .map(([name]) => name);
+    console.log('[MuscleHeatmap] Mesh nodes en el modelo:', meshNames);
+  }, [nodes]);
+
+  // Primera pasada: clonar y reemplazar todos los materiales
+  useEffect(() => {
+    const map = new Map();
+    Object.entries(nodes).forEach(([name, node]) => {
+      if (!node.isMesh) return;
+      const src = Array.isArray(node.material) ? node.material[0] : node.material;
+      const mat = src
+        ? src.clone()
+        : new THREE.MeshStandardMaterial();
+      mat.metalness = 0.08;
+      mat.roughness  = 0.7;
+      mat.side = THREE.DoubleSide;
+      if (Array.isArray(node.material)) {
+        node.material = node.material.map(() => mat);
+      } else {
+        node.material = mat;
+      }
+      map.set(name, mat);
     });
-    materialsRef.current = mats;
-  }, [clonedScene]);
+    matsRef.current = map;
+  }, [nodes]);
 
-  // Segunda pasada: actualizar colores en vivo cuando cambian muscleStats
+  // Segunda pasada: colorear en vivo cuando cambian las stats
   useEffect(() => {
-    materialsRef.current.forEach(({ mesh, mat }) => {
-      const muscleName = getMuscleFromMeshName(mesh.name);
-      const stat = muscleName ? statsByMuscle[muscleName] : null;
-      // Si no hay match por nombre, usa el nivel global del cuerpo
+    const statsByMuscle = Object.fromEntries(muscleStats.map((m) => [m.muscle, m]));
+    const globalLevel   = Math.max(0, ...muscleStats.map((m) => m.colorLevel));
+
+    matsRef.current.forEach((mat, name) => {
+      const muscleName = getMuscleFromNodeName(name);
+      const stat  = muscleName ? statsByMuscle[muscleName] : null;
       const level = stat?.colorLevel ?? globalLevel;
-      const hex = LEVEL_COLORS[level] ?? LEVEL_COLORS[0];
+      const hex   = LEVEL_COLORS[level];
 
-      const baseColor = isDark ? '#c8a882' : '#c8a882';
-      mat.color = new THREE.Color(baseColor);
+      // Base: tono piel/músculo + emissive con el calor
+      mat.color = new THREE.Color(isDark ? '#b89070' : '#c8a882');
       mat.emissive = new THREE.Color(hex);
-      mat.emissiveIntensity = level === 0 ? 0.05 : 0.45;
+      mat.emissiveIntensity = level === 0 ? 0.03 : 0.45;
     });
-  }, [statsByMuscle, globalLevel, isDark]);
+  }, [muscleStats, isDark]);
 
-  return <primitive object={clonedScene} dispose={null} />;
+  return <primitive object={scene} dispose={null} />;
 }
 
-// Preload para que empiece a cargar antes de renderizar
-useGLTF.preload('/scene.gltf');
+useGLTF.preload('/male_body_anatomy.glb');
 
-// ─── Escena completa ───────────────────────────────────────────────────────────
-
-function LoadingBody({ isDark }) {
-  return (
-    <mesh>
-      <boxGeometry args={[0.01, 0.01, 0.01]} />
-      <meshBasicMaterial color={isDark ? '#334155' : '#cbd5e1'} />
-    </mesh>
-  );
-}
+// ─── Escena ────────────────────────────────────────────────────────────────────
 
 function BodyScene3D({ muscleStats, isDark }) {
-  const bgColor = isDark ? '#0f172a' : '#f1f5f9';
+  const bg = isDark ? '#0f172a' : '#f1f5f9';
 
   return (
-    <div
-      className="w-full rounded-2xl overflow-hidden"
-      style={{ height: 360 }}
-    >
+    <div className="w-full rounded-2xl overflow-hidden" style={{ height: 380 }}>
       <Canvas
         camera={{ fov: 45, near: 0.001, far: 1000 }}
         gl={{ antialias: true, alpha: false }}
-        style={{ background: bgColor }}
+        style={{ background: bg }}
       >
-        <ambientLight intensity={isDark ? 0.55 : 0.75} />
-        <directionalLight position={[2, 4, 3]} intensity={1.4} castShadow={false} />
-        <directionalLight position={[-2, -1, -2]} intensity={0.35} />
+        <ambientLight intensity={isDark ? 0.55 : 0.8} />
+        <directionalLight position={[3, 5, 3]}  intensity={1.5} />
+        <directionalLight position={[-3, -2, -3]} intensity={0.4} />
 
-        <Suspense fallback={<LoadingBody isDark={isDark} />}>
-          {/* Bounds auto-ajusta la cámara al bounding box real del modelo */}
-          <Bounds fit clip observe margin={1.1}>
+        <Suspense fallback={null}>
+          <Bounds fit clip observe margin={1.15}>
             <Center>
               <HumanModel muscleStats={muscleStats} isDark={isDark} />
             </Center>
@@ -151,7 +137,7 @@ function BodyScene3D({ muscleStats, isDark }) {
   );
 }
 
-// ─── Cálculo de datos (useMemo) ────────────────────────────────────────────────
+// ─── Cálculo de datos ──────────────────────────────────────────────────────────
 
 export default function MuscleHeatmap({ diary, routines, library, isDark, selectedDate }) {
   const muscleStats = useMemo(() => {
@@ -159,36 +145,33 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
     MUSCLE_GROUPS_LIST.forEach((m) => { stats[m] = 0; });
 
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
-    const cutoffObj = new Date(now);
+    const todayStr    = now.toISOString().split('T')[0];
+    const cutoffObj   = new Date(now);
     cutoffObj.setDate(cutoffObj.getDate() - 30);
-    const cutoffDateStr = cutoffObj.toISOString().split('T')[0];
+    const cutoffStr   = cutoffObj.toISOString().split('T')[0];
 
     Object.keys(diary).forEach((dateStr) => {
-      if (dateStr < cutoffDateStr || dateStr > todayStr) return;
-
+      if (dateStr < cutoffStr || dateStr > todayStr) return;
       const dayData = diary[dateStr];
       if (!dayData?.sessions) return;
 
-      const countedSets = new Set();
-
+      const counted = new Set();
       Object.entries(dayData.sessions).forEach(([key, value]) => {
         const parts = key.split('-');
         if (parts.length < 4) return;
 
-        const rId = parts[0];
-        const exIdx = parseInt(parts[1], 10);
+        const rId    = parts[0];
+        const exIdx  = parseInt(parts[1], 10);
         const sIdxStr = parts[2];
 
-        const completedKey = `${rId}-${exIdx}`;
-        if (!dayData.completed?.[completedKey]) return;
+        if (!dayData.completed?.[`${rId}-${exIdx}`]) return;
 
         const valNum = parseFloat(value);
         if (isNaN(valNum) || valNum <= 0) return;
 
-        const uniqueSetId = `${dateStr}-${rId}-${exIdx}-${sIdxStr}`;
-        if (countedSets.has(uniqueSetId)) return;
-        countedSets.add(uniqueSetId);
+        const uid = `${dateStr}-${rId}-${exIdx}-${sIdxStr}`;
+        if (counted.has(uid)) return;
+        counted.add(uid);
 
         const routineEx = routines[rId]?.[exIdx];
         if (!routineEx) return;
@@ -196,16 +179,16 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
         const libEx = library.find(
           (l) => l.id === routineEx.exId || l.name === routineEx.customName,
         );
-        const muscleName = libEx ? libEx.muscle : 'Otro';
-        if (stats[muscleName] !== undefined) stats[muscleName] += 1;
+        const muscle = libEx ? libEx.muscle : 'Otro';
+        if (stats[muscle] !== undefined) stats[muscle] += 1;
         else stats['Otro'] += 1;
       });
     });
 
-    const sortedStats = Object.entries(stats).sort((a, b) => b[1] - a[1]);
-    const maxSets = sortedStats[0][1] || 1;
+    const sorted  = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+    const maxSets = sorted[0][1] || 1;
 
-    return sortedStats.map(([muscle, totalSets]) => {
+    return sorted.map(([muscle, totalSets]) => {
       const percentage = (totalSets / maxSets) * 100;
       let colorLevel = 0;
       if (totalSets > 0) {
@@ -222,7 +205,7 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
 
   return (
     <div className="space-y-5">
-      {/* Modelo 3D */}
+      {/* Modelo 3D interactivo */}
       <BodyScene3D muscleStats={muscleStats} isDark={isDark} />
 
       {/* Leyenda */}
@@ -242,25 +225,13 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
 
       {/* Lista de músculos */}
       {hasData ? (
-        <div
-          className={`rounded-2xl px-4 py-3.5 space-y-2.5 ${
-            isDark ? 'bg-white/5' : 'bg-slate-50 border border-slate-200'
-          }`}
-        >
-          <p
-            className={`text-[10px] font-black uppercase tracking-widest mb-1 ${
-              isDark ? 'text-amber-400/90' : 'text-amber-600'
-            }`}
-          >
+        <div className={`rounded-2xl px-4 py-3.5 space-y-2.5 ${isDark ? 'bg-white/5' : 'bg-slate-50 border border-slate-200'}`}>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${isDark ? 'text-amber-400/90' : 'text-amber-600'}`}>
             Últimos 30 días
           </p>
           {muscleStats.map((m, i) => (
             <div key={m.muscle} className="flex items-center gap-2.5">
-              <span
-                className={`text-[11px] font-black w-4 shrink-0 tabular-nums ${
-                  isDark ? 'text-slate-600' : 'text-slate-400'
-                }`}
-              >
+              <span className={`text-[11px] font-black w-4 shrink-0 tabular-nums ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
                 {i + 1}
               </span>
               <div
@@ -287,13 +258,7 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
                   />
                 </div>
               </div>
-              <span
-                className={`text-[11px] font-black tabular-nums shrink-0 ${
-                  m.totalSets === 0
-                    ? isDark ? 'text-slate-600' : 'text-slate-400'
-                    : isDark ? 'text-slate-300' : 'text-slate-600'
-                }`}
-              >
+              <span className={`text-[11px] font-black tabular-nums shrink-0 ${m.totalSets === 0 ? (isDark ? 'text-slate-600' : 'text-slate-400') : (isDark ? 'text-slate-300' : 'text-slate-600')}`}>
                 {m.totalSets === 0 ? '—' : formatSets(m.totalSets)}
               </span>
             </div>
