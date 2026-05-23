@@ -225,14 +225,13 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
     <div className="space-y-5">
 
       {/* ── Vistas del cuerpo ──────────────────────────────────────────── */}
-      <div className={`rounded-2xl p-4 ${isDark ? 'bg-white/5 backdrop-blur-xl border border-white/10' : 'bg-white/80 backdrop-blur-xl border border-slate-200'}`}>
-        <div className="flex gap-4 justify-center">
-          <BodyView side="front" blobs={FRONT_BLOBS} statsMap={statsMap} isDark={isDark} />
-          <BodyView side="back"  blobs={BACK_BLOBS}  statsMap={statsMap} isDark={isDark} />
-        </div>
+      <div className="flex gap-4 justify-center px-2">
+        <BodyView side="front" blobs={FRONT_BLOBS} statsMap={statsMap} isDark={isDark} />
+        <BodyView side="back"  blobs={BACK_BLOBS}  statsMap={statsMap} isDark={isDark} />
+      </div>
 
-        {/* Leyenda – barra de gradiente */}
-        <div className="mt-4 px-1">
+      {/* Leyenda – barra de gradiente */}
+      <div className="px-1">
           <div className="flex items-center gap-2">
             <span className={`text-[9px] font-semibold shrink-0 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
               Sin trabajo
@@ -250,7 +249,6 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
               <span key={l} className={`text-[8px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{l}</span>
             ))}
           </div>
-        </div>
       </div>
 
       {/* ── Lista de músculos ──────────────────────────────────────────── */}
