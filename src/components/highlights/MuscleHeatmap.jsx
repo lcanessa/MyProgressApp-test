@@ -222,7 +222,7 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
   const hasData  = muscleStats.some(m => m.progress > 0.02);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
 
       {/* ── Vistas del cuerpo ──────────────────────────────────────────── */}
       <div className="flex gap-2 justify-center px-1">
