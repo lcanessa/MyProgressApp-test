@@ -13,7 +13,7 @@ export default function BottomNav({ app }) {
   return (
     <nav className="fixed bottom-nav-bar z-40 flex justify-center items-end pointer-events-none">
       <div
-        className={`w-full max-w-sm rounded-[2rem] px-1.5 py-2 flex justify-between items-center pointer-events-auto ${
+        className={`w-full max-w-sm rounded-[2rem] px-1.5 py-1.5 flex justify-between items-center pointer-events-auto ${
           app.isDark
             ? 'bg-[#0f172a]/60 backdrop-blur-2xl backdrop-saturate-[150%] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]'
             : 'bg-white/70 backdrop-blur-2xl backdrop-saturate-[150%] border border-white/60 shadow-[0_10px_40px_rgba(100,100,111,0.1)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]'
@@ -23,18 +23,23 @@ export default function BottomNav({ app }) {
           const isActive = app.activeTab === tab.id;
 
           if (tab.center) {
+            // Botón central: círculo que sobresale simétricamente de la barra
             return (
               <button
                 key={tab.id}
                 onClick={() => app.setActiveTab(tab.id)}
-                className={`relative flex items-center justify-center w-14 h-14 -mt-5 rounded-full shadow-lg transition-all duration-300 ${
+                className={`relative flex items-center justify-center w-13 h-13 rounded-full shadow-lg transition-all duration-300 ${
                   isActive
-                    ? 'bg-purple-500 text-white shadow-purple-500/50 scale-105'
+                    ? 'bg-purple-500 text-white scale-105'
                     : (app.isDark
                         ? 'bg-purple-600/80 text-white hover:bg-purple-500'
                         : 'bg-purple-500 text-white hover:bg-purple-600')
                 }`}
-                style={{ boxShadow: '0 4px 20px rgba(168,85,247,0.5)' }}
+                style={{
+                  width: 52, height: 52,
+                  marginTop: -10, marginBottom: -10,
+                  boxShadow: '0 4px 20px rgba(168,85,247,0.5)',
+                }}
               >
                 {tab.icon}
               </button>
@@ -45,9 +50,9 @@ export default function BottomNav({ app }) {
             <button
               key={tab.id}
               onClick={() => app.setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center py-2.5 rounded-[1.15rem] transition-all duration-300 ${
+              className={`flex-1 flex items-center justify-center py-2 rounded-xl transition-all duration-300 ${
                 isActive
-                  ? (app.isDark ? 'bg-white/10 text-purple-400 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]' : 'bg-white text-purple-600 shadow-sm border border-slate-100')
+                  ? (app.isDark ? 'bg-white/10 text-purple-400' : 'bg-black/5 text-purple-600')
                   : (app.isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
               }`}
             >
