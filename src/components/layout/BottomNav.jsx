@@ -1,5 +1,14 @@
 import { Dumbbell, ClipboardList, List, Crown, PersonStanding } from 'lucide-react';
 
+// Orden: Destacados · Cuerpo · [Datos del día – centro destacado] · Rutinas · Catálogo
+const TABS = [
+  { id: 'highlights', icon: <Crown        size={20} strokeWidth={2.5} />, center: false },
+  { id: 'body',       icon: <PersonStanding size={20} strokeWidth={2.5} />, center: false },
+  { id: 'workout',    icon: <Dumbbell     size={22} strokeWidth={2.8} />, center: true  },
+  { id: 'edit',       icon: <ClipboardList size={20} strokeWidth={2.5} />, center: false },
+  { id: 'library',    icon: <List         size={20} strokeWidth={2.5} />, center: false },
+];
+
 export default function BottomNav({ app }) {
   return (
     <nav className="fixed bottom-nav-bar z-40 flex justify-center items-end pointer-events-none">
@@ -10,14 +19,28 @@ export default function BottomNav({ app }) {
             : 'bg-white/70 backdrop-blur-2xl backdrop-saturate-[150%] border border-white/60 shadow-[0_10px_40px_rgba(100,100,111,0.1)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]'
         }`}
       >
-        {[
-          { id: 'highlights', icon: <Crown size={20} strokeWidth={2.5} /> },
-          { id: 'workout', icon: <Dumbbell size={20} strokeWidth={2.5} /> },
-          { id: 'edit', icon: <ClipboardList size={20} strokeWidth={2.5} /> },
-          { id: 'library', icon: <List size={20} strokeWidth={2.5} /> },
-          { id: 'body', icon: <PersonStanding size={20} strokeWidth={2.5} /> },
-        ].map((tab) => {
+        {TABS.map((tab) => {
           const isActive = app.activeTab === tab.id;
+
+          if (tab.center) {
+            return (
+              <button
+                key={tab.id}
+                onClick={() => app.setActiveTab(tab.id)}
+                className={`relative flex items-center justify-center w-14 h-14 -mt-5 rounded-2xl shadow-lg transition-all duration-300 ${
+                  isActive
+                    ? 'bg-purple-500 text-white shadow-purple-500/50 scale-105'
+                    : (app.isDark
+                        ? 'bg-purple-600/80 text-white hover:bg-purple-500'
+                        : 'bg-purple-500 text-white hover:bg-purple-600')
+                }`}
+                style={{ boxShadow: '0 4px 20px rgba(168,85,247,0.5)' }}
+              >
+                {tab.icon}
+              </button>
+            );
+          }
+
           return (
             <button
               key={tab.id}

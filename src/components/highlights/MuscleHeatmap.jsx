@@ -8,11 +8,9 @@ const MUSCLE_FACTORS = {
   Pecho:   1.00,
   Espalda: 0.90,
   Piernas: 0.55,
-  Cardio:  1.00,
-  Otro:    1.00,
 };
 
-const MUSCLE_GROUPS_LIST = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Cardio', 'Otro'];
+const MUSCLE_GROUPS_LIST = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core'];
 
 // ─── Escala de colores (7 niveles con interpolación) ──────────────────────────
 const COLOR_STOPS = [
@@ -80,19 +78,15 @@ const BACK_BLOBS = [
 // ─── Vista 2D: imagen + SVG overlay ───────────────────────────────────────────
 
 function BodyView({ side, blobs, statsMap, isDark }) {
-  const label = side === 'front' ? 'Frente' : 'Espalda';
-  const src   = side === 'front' ? '/muscle-front.png' : '/muscle-back.png';
+  const src      = side === 'front' ? '/muscle-front.png' : '/muscle-back.png';
   const filterId = `mhm-blur-${side}`;
 
   return (
-    <div className="flex-1 flex flex-col items-center gap-1 min-w-0">
-      <span className={`text-[10px] font-bold tracking-widest uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-        {label}
-      </span>
-      <div className="relative w-full" style={{ aspectRatio: '2 / 5' }}>
+    <div className="flex-1 min-w-0" style={{ aspectRatio: '2 / 5' }}>
+      <div className="relative w-full h-full">
         <img
           src={src}
-          alt={label}
+          alt={side}
           className="absolute inset-0 w-full h-full object-contain"
           draggable={false}
         />
