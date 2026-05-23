@@ -32,12 +32,12 @@ const COLOR_STOPS = [
 // Para descubrirlos: abrí la app → pestaña Cuerpo → tocá una zona del modelo.
 // La consola muestra: [MuscleHeatmap] Clickeaste: "NombreDelNodo"
 const MUSCLE_MAPPING = {
-  Pecho:   ['Object_29'],
-  Espalda: ['Object_13'],
-  Piernas: ['Object_9', 'Object_17'],
-  Hombros: ['Object_5'],
-  Brazos:  ['Object_33'],
-  Core:    ['Object_23'],
+  Pecho:   [],
+  Espalda: [],
+  Piernas: [],
+  Hombros: [],
+  Brazos:  [],
+  Core:    [],
 };
 
 // ─── Utilidades de color ───────────────────────────────────────────────────────
@@ -98,7 +98,8 @@ function HumanModel({ muscleStats, isDark }) {
       map.set(child.name, { mat, isPR: false });
     });
     matsRef.current = map;
-    console.log('[MuscleHeatmap] Meshes disponibles (tocá uno para identificarlo):', names);
+    console.log(`%c[MuscleHeatmap] ${names.length} meshes en el modelo:`, 'color:#f59e0b;font-weight:bold');
+    names.forEach((n, i) => console.log(`  ${String(i+1).padStart(2,'0')}. "${n}"`));
   }, [scene]);
 
   // Actualizar colores cuando cambian las stats
@@ -128,7 +129,8 @@ function HumanModel({ muscleStats, isDark }) {
 
   const handleClick = e => {
     e.stopPropagation();
-    if (e.object?.name) console.log(`[MuscleHeatmap] Clickeaste: "${e.object.name}"`);
+    const name = e.object?.name;
+    if (name) console.log(`%c[MuscleHeatmap] Clickeaste: "${name}"`, 'color:#22c55e;font-weight:bold');
   };
 
   return <primitive object={scene} dispose={null} onClick={handleClick} />;
