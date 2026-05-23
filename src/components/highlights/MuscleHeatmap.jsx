@@ -44,7 +44,7 @@ function getMuscleFromNodeName(name) {
 // ─── Modelo 3D ─────────────────────────────────────────────────────────────────
 
 function HumanModel({ muscleStats, isDark }) {
-  const { nodes, scene } = useGLTF('/male_body_anatomy.glb');
+  const { nodes, scene } = useGLTF('/male_full_body.glb');
   const matsRef = useRef(new Map()); // nodeName → cloned material
 
   // Loguear todos los nodos disponibles (solo en dev) para ajustar el mapping
@@ -98,7 +98,7 @@ function HumanModel({ muscleStats, isDark }) {
   return <primitive object={scene} dispose={null} />;
 }
 
-useGLTF.preload('/male_body_anatomy.glb');
+useGLTF.preload('/male_full_body.glb');
 
 // ─── Escena ────────────────────────────────────────────────────────────────────
 
