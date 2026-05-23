@@ -8,9 +8,11 @@ const MUSCLE_FACTORS = {
   Pecho:   1.00,
   Espalda: 0.90,
   Piernas: 0.55,
+  Cardio:  1.00,
+  Otro:    1.00,
 };
 
-const MUSCLE_GROUPS_LIST = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Cardio'];
+const MUSCLE_GROUPS_LIST = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Cardio', 'Otro'];
 
 // ─── Escala de colores (7 niveles con interpolación) ──────────────────────────
 const COLOR_STOPS = [
@@ -20,7 +22,7 @@ const COLOR_STOPS = [
   { at: 0.55, hex: '#eab308' },
   { at: 0.75, hex: '#f97316' },
   { at: 0.90, hex: '#dc2626' },
-  { at: 1.00, hex: '#f59e0b' },
+  { at: 1.00, hex: '#fbbf24' },
 ];
 
 function lerpColor(hex1, hex2, t) {
@@ -129,7 +131,7 @@ function BodyView({ side, blobs, statsMap, isDark }) {
 
 // ─── Componente principal ──────────────────────────────────────────────────────
 
-export default function MuscleHeatmap({ diary, routines, library, isDark }) {
+export default function MuscleHeatmap({ diary, routines, library, isDark, selectedDate }) {
   const muscleStats = useMemo(() => {
     // ── 1. Puntaje por día y músculo ─────────────────────────────────────────
     const dayScores = {};
@@ -163,26 +165,27 @@ export default function MuscleHeatmap({ diary, routines, library, isDark }) {
         const muscle = libEx?.muscle;
         if (!muscle || !MUSCLE_FACTORS[muscle]) return;
 
-        // Peso cero = ejercicio corporal: volumen = reps
-        const rawVol = w > 0 ? w * Math.max(r, 1) : Math.max(r, 1);
-        const score  = Math.pow(rawVol, 0.7) * MUSCLE_FACTORS[muscle];
+        // Peso cero / nulo = ejercicio corporal: peso virtual de 10
+        const effectiveW = (w > 0 && !isNaN(w)) ? w : 10;
+        const rawVol     = effectiveW * Math.max(r, 1);
+        const score      = Math.pow(rawVol, 0.7) * MUSCLE_FACTORS[muscle];
 
         if (!dayScores[dateStr]) dayScores[dateStr] = {};
         dayScores[dateStr][muscle] = (dayScores[dateStr][muscle] || 0) + score;
       });
     });
 
-    // ── 2. Score actual (últimos 30 días desde hoy) ──────────────────────────
-    const now       = new Date();
-    const todayStr  = now.toISOString().split('T')[0];
-    const cutoff    = new Date(now); cutoff.setDate(cutoff.getDate() - 30);
-    const cutoffStr = cutoff.toISOString().split('T')[0];
+    // ── 2. Score actual (últimos 30 días hasta selectedDate) ─────────────────
+    const limitDate  = selectedDate || new Date().toISOString().split('T')[0];
+    const cutoffObj  = new Date(limitDate + 'T00:00:00');
+    cutoffObj.setDate(cutoffObj.getDate() - 30);
+    const cutoffStr  = cutoffObj.toISOString().split('T')[0];
 
     const currentScores = {};
     Object.keys(MUSCLE_FACTORS).forEach(m => { currentScores[m] = 0; });
 
     Object.entries(dayScores).forEach(([dateStr, scores]) => {
-      if (dateStr < cutoffStr || dateStr > todayStr) return;
+      if (dateStr < cutoffStr || dateStr > limitDate) return;
       Object.entries(scores).forEach(([muscle, score]) => {
         if (currentScores[muscle] !== undefined) currentScores[muscle] += score;
       });
@@ -218,7 +221,7 @@ export default function MuscleHeatmap({ diary, routines, library, isDark }) {
       return { muscle, progress, isPR: progress >= 1.0, color: progressToColor(progress) };
     }).sort((a, b) => b.progress - a.progress);
 
-  }, [diary, routines, library]);
+  }, [diary, routines, library, selectedDate]);
 
   // Mapa rápido muscle → stat para los blobs
   const statsMap = Object.fromEntries(muscleStats.map(m => [m.muscle, m]));
@@ -284,7 +287,8 @@ export default function MuscleHeatmap({ diary, routines, library, isDark }) {
                     style={{
                       width: `${Math.min(m.progress, 1) * 100}%`,
                       backgroundColor: m.color,
-                      boxShadow: m.isPR ? `0 0 6px 1px ${m.color}` : undefined,
+                      boxShadow: m.isPR ? `0 0 8px 2px #fbbf24` : undefined,
+                      filter:    m.isPR ? 'drop-shadow(0 0 4px #fbbf24)' : undefined,
                     }}
                   />
                 </div>
