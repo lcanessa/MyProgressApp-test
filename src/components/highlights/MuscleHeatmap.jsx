@@ -1,10 +1,6 @@
-import { Suspense, useEffect, useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Bounds, Center } from '@react-three/drei';
-import * as THREE from 'three';
+import { useMemo } from 'react';
 
 // ─── Grupos y factores de balance muscular ─────────────────────────────────────
-// El factor compensa que piernas/espalda mueven mucho más peso por naturaleza.
 const MUSCLE_FACTORS = {
   Brazos:  1.80,
   Hombros: 1.45,
@@ -16,31 +12,16 @@ const MUSCLE_FACTORS = {
 
 const MUSCLE_GROUPS_LIST = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Cardio'];
 
-// ─── Escala de colores (7 niveles) ────────────────────────────────────────────
+// ─── Escala de colores (7 niveles con interpolación) ──────────────────────────
 const COLOR_STOPS = [
-  { at: 0.00, hex: '#334155' }, // sin trabajo – gris oscuro
-  { at: 0.15, hex: '#3b82f6' }, // leve        – azul
-  { at: 0.35, hex: '#22c55e' }, // medio        – verde
-  { at: 0.55, hex: '#eab308' }, // bueno        – amarillo
-  { at: 0.75, hex: '#f97316' }, // intenso      – naranja
-  { at: 0.90, hex: '#dc2626' }, // pico         – rojo
-  { at: 1.00, hex: '#f59e0b' }, // PR           – dorado
+  { at: 0.00, hex: '#334155' },
+  { at: 0.15, hex: '#3b82f6' },
+  { at: 0.35, hex: '#22c55e' },
+  { at: 0.55, hex: '#eab308' },
+  { at: 0.75, hex: '#f97316' },
+  { at: 0.90, hex: '#dc2626' },
+  { at: 1.00, hex: '#f59e0b' },
 ];
-
-// ─── MUSCLE MAPPING ────────────────────────────────────────────────────────────
-// Completar con los nombres reales de los nodos del GLB.
-// Para descubrirlos: abrí la app → pestaña Cuerpo → tocá una zona del modelo.
-// La consola muestra: [MuscleHeatmap] Clickeaste: "NombreDelNodo"
-const MUSCLE_MAPPING = {
-  Pecho:   [],
-  Espalda: [],
-  Piernas: [],
-  Hombros: [],
-  Brazos:  [],
-  Core:    [],
-};
-
-// ─── Utilidades de color ───────────────────────────────────────────────────────
 
 function lerpColor(hex1, hex2, t) {
   const p = (h, o, l) => parseInt(h.slice(o, l), 16);
@@ -55,137 +36,109 @@ function progressToColor(progress) {
   for (let i = 0; i < COLOR_STOPS.length - 1; i++) {
     const a = COLOR_STOPS[i], b = COLOR_STOPS[i + 1];
     if (p >= a.at && p <= b.at) {
-      const t = (p - a.at) / (b.at - a.at);
-      return lerpColor(a.hex, b.hex, t);
+      return lerpColor(a.hex, b.hex, (p - a.at) / (b.at - a.at));
     }
   }
-  return '#f59e0b'; // dorado para > 1.0
+  return '#f59e0b';
 }
 
-const formatProgress = (progress) =>
-  progress >= 1.0 ? 'PR' : progress < 0.02 ? '—' : `${Math.round(progress * 100)}%`;
+const formatProgress = (p) =>
+  p >= 1.0 ? 'PR' : p < 0.02 ? '—' : `${Math.round(p * 100)}%`;
 
-// ─── Lookup inverso: nodeName → muscleName ────────────────────────────────────
+// ─── Blobs SVG: posiciones sobre viewBox 0 0 100 240 ─────────────────────────
+// Ajustar cx/cy/rx/ry si las imágenes tienen proporciones distintas.
+// cx/cy = centro del blob en %, rx/ry = radios en unidades del viewBox.
 
-const NODE_TO_MUSCLE = (() => {
-  const map = {};
-  Object.entries(MUSCLE_MAPPING).forEach(([muscle, names]) => {
-    names.forEach(n => { map[n] = muscle; });
-  });
-  return map;
-})();
+const FRONT_BLOBS = [
+  { muscle: 'Pecho',
+    shapes: [{ cx: 50, cy: 87, rx: 18, ry: 12 }] },
+  { muscle: 'Hombros',
+    shapes: [{ cx: 25, cy: 73, rx: 10, ry: 9 }, { cx: 75, cy: 73, rx: 10, ry: 9 }] },
+  { muscle: 'Brazos',
+    shapes: [{ cx: 15, cy: 107, rx: 7, ry: 16 }, { cx: 85, cy: 107, rx: 7, ry: 16 }] },
+  { muscle: 'Core',
+    shapes: [{ cx: 50, cy: 112, rx: 13, ry: 17 }] },
+  { muscle: 'Piernas',
+    shapes: [{ cx: 38, cy: 168, rx: 13, ry: 32 }, { cx: 62, cy: 168, rx: 13, ry: 32 }] },
+];
 
-// ─── Modelo 3D ─────────────────────────────────────────────────────────────────
+const BACK_BLOBS = [
+  { muscle: 'Espalda',
+    shapes: [{ cx: 50, cy: 87, rx: 22, ry: 22 }] },
+  { muscle: 'Hombros',
+    shapes: [{ cx: 25, cy: 73, rx: 10, ry: 9 }, { cx: 75, cy: 73, rx: 10, ry: 9 }] },
+  { muscle: 'Brazos',
+    shapes: [{ cx: 15, cy: 107, rx: 7, ry: 16 }, { cx: 85, cy: 107, rx: 7, ry: 16 }] },
+  { muscle: 'Core',
+    shapes: [{ cx: 50, cy: 108, rx: 12, ry: 10 }] },
+  { muscle: 'Piernas',
+    shapes: [{ cx: 38, cy: 165, rx: 14, ry: 32 }, { cx: 62, cy: 165, rx: 14, ry: 32 }] },
+];
 
-function HumanModel({ muscleStats, isDark }) {
-  const { scene }  = useGLTF('/male_full_body.glb');
-  const matsRef    = useRef(new Map()); // meshName → { mat, isPR }
-  const clockRef   = useRef(0);
+// ─── Vista 2D: imagen + SVG overlay ───────────────────────────────────────────
 
-  // Primera carga: loguear nodos y clonar materiales
-  useEffect(() => {
-    const names = [];
-    const map   = new Map();
-    scene.traverse(child => {
-      if (!child.isMesh) return;
-      names.push(child.name);
-      const mat = new THREE.MeshStandardMaterial({
-        metalness: 0.08,
-        roughness: 0.68,
-        side: THREE.DoubleSide,
-      });
-      child.material = mat;
-      map.set(child.name, { mat, isPR: false });
-    });
-    matsRef.current = map;
-    console.log(`%c[MuscleHeatmap] ${names.length} meshes en el modelo:`, 'color:#f59e0b;font-weight:bold');
-    names.forEach((n, i) => console.log(`  ${String(i+1).padStart(2,'0')}. "${n}"`));
-  }, [scene]);
+function BodyView({ side, blobs, statsMap, isDark }) {
+  const label = side === 'front' ? 'Frente' : 'Espalda';
+  const src   = side === 'front' ? '/cuerpo_frente.png' : '/cuerpo_espalda.png';
+  const filterId = `mhm-blur-${side}`;
 
-  // Actualizar colores cuando cambian las stats
-  useEffect(() => {
-    const byMuscle = Object.fromEntries(muscleStats.map(m => [m.muscle, m]));
-    matsRef.current.forEach((entry, name) => {
-      const muscleName = NODE_TO_MUSCLE[name];
-      const stat     = muscleName ? byMuscle[muscleName] : null;
-      const progress = stat?.progress ?? 0;
-      const color    = progressToColor(progress);
-      const isPR     = progress >= 1.0;
-      entry.isPR = isPR;
-      entry.mat.color.set(isDark ? '#a07858' : '#b8916a');
-      entry.mat.emissive.set(color);
-      entry.mat.emissiveIntensity = progress < 0.05 ? 0.02 : (isPR ? 0.65 : 0.45);
-    });
-  }, [muscleStats, isDark]);
-
-  // Animación de pulso dorado para músculos en PR
-  useFrame((_, delta) => {
-    clockRef.current += delta;
-    const pulse = 0.45 + 0.55 * Math.abs(Math.sin(clockRef.current * 2.5));
-    matsRef.current.forEach(({ mat, isPR }) => {
-      if (isPR) mat.emissiveIntensity = pulse;
-    });
-  });
-
-  const handleClick = e => {
-    e.stopPropagation();
-    const name = e.object?.name;
-    if (name) console.log(`%c[MuscleHeatmap] Clickeaste: "${name}"`, 'color:#22c55e;font-weight:bold');
-  };
-
-  return <primitive object={scene} dispose={null} onClick={handleClick} />;
-}
-
-useGLTF.preload('/male_full_body.glb');
-
-// ─── Escena ────────────────────────────────────────────────────────────────────
-
-function BodyScene3D({ muscleStats, isDark }) {
-  const bg = isDark ? '#0f172a' : '#f1f5f9';
   return (
-    <div className="w-full rounded-2xl overflow-hidden" style={{ height: 380 }}>
-      <Canvas
-        camera={{ fov: 45, near: 0.001, far: 1000 }}
-        gl={{ antialias: true, alpha: false }}
-        style={{ background: bg }}
-      >
-        <ambientLight intensity={isDark ? 0.55 : 0.8} />
-        <directionalLight position={[3, 5, 3]}   intensity={1.5} />
-        <directionalLight position={[-3, -2, -3]} intensity={0.4} />
-
-        <Suspense fallback={null}>
-          <Bounds fit clip observe margin={1.15}>
-            <Center>
-              <HumanModel muscleStats={muscleStats} isDark={isDark} />
-            </Center>
-          </Bounds>
-        </Suspense>
-
-        <OrbitControls
-          enableZoom={false}
-          enablePan={false}
-          minPolarAngle={Math.PI / 6}
-          maxPolarAngle={(Math.PI * 5) / 6}
-          autoRotate
-          autoRotateSpeed={0.7}
+    <div className="flex-1 flex flex-col items-center gap-1 min-w-0">
+      <span className={`text-[10px] font-bold tracking-widest uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+        {label}
+      </span>
+      <div className="relative w-full" style={{ aspectRatio: '2 / 5' }}>
+        <img
+          src={src}
+          alt={label}
+          className="absolute inset-0 w-full h-full object-contain"
+          draggable={false}
         />
-      </Canvas>
+        <svg
+          viewBox="0 0 100 240"
+          className="absolute inset-0 w-full h-full"
+          style={{ mixBlendMode: isDark ? 'screen' : 'multiply' }}
+          aria-hidden="true"
+        >
+          <defs>
+            <filter id={filterId} x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="6" />
+            </filter>
+          </defs>
+          <g filter={`url(#${filterId})`} opacity={isDark ? 0.80 : 0.65}>
+            {blobs.map(({ muscle, shapes }) => {
+              const stat     = statsMap[muscle];
+              const progress = stat?.progress ?? 0;
+              if (progress < 0.02) return null;
+              const color = progressToColor(progress);
+              return shapes.map((s, i) => (
+                <ellipse
+                  key={`${muscle}-${i}`}
+                  cx={s.cx} cy={s.cy}
+                  rx={s.rx} ry={s.ry}
+                  fill={color}
+                />
+              ));
+            })}
+          </g>
+        </svg>
+      </div>
     </div>
   );
 }
 
-// ─── Cálculo de datos ──────────────────────────────────────────────────────────
+// ─── Componente principal ──────────────────────────────────────────────────────
 
-export default function MuscleHeatmap({ diary, routines, library, isDark, selectedDate }) {
+export default function MuscleHeatmap({ diary, routines, library, isDark }) {
   const muscleStats = useMemo(() => {
     // ── 1. Puntaje por día y músculo ─────────────────────────────────────────
-    const dayScores = {}; // dateStr → { muscle → score }
+    const dayScores = {};
 
     Object.keys(diary).forEach(dateStr => {
       const dayData = diary[dateStr];
       if (!dayData?.sessions) return;
 
-      // Agrupar por set (rId-exIdx-sIdx) para obtener peso Y reps del mismo set
+      // Agrupa por set para obtener peso Y reps del mismo set
       const setMap = {};
       Object.entries(dayData.sessions).forEach(([key, value]) => {
         const parts = key.split('-');
@@ -200,7 +153,6 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
       });
 
       Object.values(setMap).forEach(({ rId, exIdx, w, r }) => {
-        // Solo series de ejercicios completados
         if (!dayData.completed?.[`${rId}-${exIdx}`]) return;
         if (w <= 0 && r <= 0) return;
 
@@ -211,7 +163,7 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
         const muscle = libEx?.muscle;
         if (!muscle || !MUSCLE_FACTORS[muscle]) return;
 
-        // Peso cero → ejercicio corporal: volumen = reps
+        // Peso cero = ejercicio corporal: volumen = reps
         const rawVol = w > 0 ? w * Math.max(r, 1) : Math.max(r, 1);
         const score  = Math.pow(rawVol, 0.7) * MUSCLE_FACTORS[muscle];
 
@@ -260,50 +212,51 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
 
     // ── 4. Calcular progreso y color ─────────────────────────────────────────
     return MUSCLE_GROUPS_LIST.map(muscle => {
-      const current = currentScores[muscle] ?? 0;
-      const best    = bestScores[muscle]    ?? 0;
+      const current  = currentScores[muscle] ?? 0;
+      const best     = bestScores[muscle]    ?? 0;
       const progress = best > 0 ? Math.min(current / best, 1.2) : (current > 0 ? 1.0 : 0);
-      return {
-        muscle,
-        progress,
-        isPR:  progress >= 1.0,
-        color: progressToColor(progress),
-      };
+      return { muscle, progress, isPR: progress >= 1.0, color: progressToColor(progress) };
     }).sort((a, b) => b.progress - a.progress);
 
   }, [diary, routines, library]);
 
-  const hasData = muscleStats.some(m => m.progress > 0.02);
+  // Mapa rápido muscle → stat para los blobs
+  const statsMap = Object.fromEntries(muscleStats.map(m => [m.muscle, m]));
+  const hasData  = muscleStats.some(m => m.progress > 0.02);
 
   return (
     <div className="space-y-5">
-      {/* Modelo 3D */}
-      <BodyScene3D muscleStats={muscleStats} isDark={isDark} />
 
-      {/* Leyenda – barra de gradiente compacta */}
-      <div className="px-1">
-        <div className="flex items-center gap-2">
-          <span className={`text-[9px] font-semibold shrink-0 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            Sin trabajo
-          </span>
-          <div
-            className="flex-1 h-2 rounded-full"
-            style={{
-              background: `linear-gradient(to right, ${COLOR_STOPS.map(s => s.hex).join(', ')})`,
-            }}
-          />
-          <span className={`text-[9px] font-semibold shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
-            PR
-          </span>
+      {/* ── Vistas del cuerpo ──────────────────────────────────────────── */}
+      <div className={`rounded-2xl p-4 ${isDark ? 'bg-white/5 backdrop-blur-xl border border-white/10' : 'bg-white/80 backdrop-blur-xl border border-slate-200'}`}>
+        <div className="flex gap-4 justify-center">
+          <BodyView side="front" blobs={FRONT_BLOBS} statsMap={statsMap} isDark={isDark} />
+          <BodyView side="back"  blobs={BACK_BLOBS}  statsMap={statsMap} isDark={isDark} />
         </div>
-        <div className="flex justify-between mt-0.5 px-0">
-          {['Leve', 'Medio', 'Bueno', 'Intenso', 'Pico'].map(l => (
-            <span key={l} className={`text-[8px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{l}</span>
-          ))}
+
+        {/* Leyenda – barra de gradiente */}
+        <div className="mt-4 px-1">
+          <div className="flex items-center gap-2">
+            <span className={`text-[9px] font-semibold shrink-0 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              Sin trabajo
+            </span>
+            <div
+              className="flex-1 h-2 rounded-full"
+              style={{ background: `linear-gradient(to right, ${COLOR_STOPS.map(s => s.hex).join(', ')})` }}
+            />
+            <span className={`text-[9px] font-semibold shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+              PR
+            </span>
+          </div>
+          <div className="flex justify-between mt-0.5">
+            {['Leve', 'Medio', 'Bueno', 'Intenso', 'Pico'].map(l => (
+              <span key={l} className={`text-[8px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{l}</span>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Lista de músculos */}
+      {/* ── Lista de músculos ──────────────────────────────────────────── */}
       {hasData ? (
         <div className={`rounded-2xl px-4 py-3.5 space-y-2.5 ${isDark ? 'bg-white/5' : 'bg-slate-50 border border-slate-200'}`}>
           <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${isDark ? 'text-amber-400/90' : 'text-amber-600'}`}>
@@ -314,16 +267,12 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
               <span className={`text-[11px] font-black w-4 shrink-0 tabular-nums ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
                 {i + 1}
               </span>
-              {/* Dot con pulso dorado para PRs */}
               <div
                 className={`w-2.5 h-2.5 rounded-full shrink-0 ${m.isPR ? 'animate-pulse' : ''}`}
                 style={{ backgroundColor: m.color }}
               />
               <div className="flex-1 flex items-center gap-2 min-w-0">
-                <span
-                  className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}
-                  style={{ minWidth: '4.5rem' }}
-                >
+                <span className={`text-sm font-bold shrink-0 ${isDark ? 'text-white' : 'text-slate-800'}`} style={{ minWidth: '4.5rem' }}>
                   {m.muscle}
                 </span>
                 <div
@@ -340,15 +289,8 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
                   />
                 </div>
               </div>
-              {/* Progreso % o badge PR */}
               <span
-                className={`text-[11px] font-black tabular-nums shrink-0 transition-colors duration-500 ${
-                  m.isPR
-                    ? 'animate-pulse'
-                    : m.progress < 0.02
-                    ? (isDark ? 'text-slate-600' : 'text-slate-400')
-                    : (isDark ? 'text-slate-300' : 'text-slate-600')
-                }`}
+                className={`text-[11px] font-black tabular-nums shrink-0 transition-colors duration-500 ${m.isPR ? 'animate-pulse' : m.progress < 0.02 ? (isDark ? 'text-slate-600' : 'text-slate-400') : (isDark ? 'text-slate-300' : 'text-slate-600')}`}
                 style={{ color: m.isPR ? '#f59e0b' : undefined, minWidth: '2.2rem', textAlign: 'right' }}
               >
                 {formatProgress(m.progress)}
