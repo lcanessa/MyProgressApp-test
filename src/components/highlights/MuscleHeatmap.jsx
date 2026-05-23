@@ -175,17 +175,17 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
       });
     });
 
-    // ── 2. Score actual (últimos 30 días hasta selectedDate) ─────────────────
-    const limitDate  = selectedDate || new Date().toISOString().split('T')[0];
-    const cutoffObj  = new Date(limitDate + 'T00:00:00');
+    // ── 2. Score actual (siempre últimos 30 días hasta HOY) ──────────────────
+    const todayStr  = new Date().toISOString().split('T')[0];
+    const cutoffObj = new Date();
     cutoffObj.setDate(cutoffObj.getDate() - 30);
-    const cutoffStr  = cutoffObj.toISOString().split('T')[0];
+    const cutoffStr = cutoffObj.toISOString().split('T')[0];
 
     const currentScores = {};
     Object.keys(MUSCLE_FACTORS).forEach(m => { currentScores[m] = 0; });
 
     Object.entries(dayScores).forEach(([dateStr, scores]) => {
-      if (dateStr < cutoffStr || dateStr > limitDate) return;
+      if (dateStr < cutoffStr || dateStr > todayStr) return;
       Object.entries(scores).forEach(([muscle, score]) => {
         if (currentScores[muscle] !== undefined) currentScores[muscle] += score;
       });
