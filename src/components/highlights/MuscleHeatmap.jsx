@@ -82,8 +82,8 @@ function BodyView({ side, blobs, statsMap, isDark }) {
   const filterId = `mhm-blur-${side}`;
 
   return (
-    <div className="flex-1 min-w-0" style={{ aspectRatio: '2 / 5' }}>
-      <div className="relative w-full h-full">
+    <div className="flex-1 min-w-0 overflow-hidden" style={{ aspectRatio: '2 / 5' }}>
+      <div className="relative w-full h-full overflow-hidden">
         <img
           src={src}
           alt={side}
@@ -92,13 +92,13 @@ function BodyView({ side, blobs, statsMap, isDark }) {
         />
         <svg
           viewBox="0 0 100 240"
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full pointer-events-none"
           style={{ mixBlendMode: isDark ? 'screen' : 'multiply' }}
           aria-hidden="true"
         >
           <defs>
-            <filter id={filterId} x="-60%" y="-60%" width="220%" height="220%">
-              <feGaussianBlur stdDeviation="6" />
+            <filter id={filterId} x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="5" result="blur" />
             </filter>
           </defs>
           <g filter={`url(#${filterId})`} opacity={isDark ? 0.80 : 0.65}>

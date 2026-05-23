@@ -39,7 +39,7 @@ export default function App() {
 
   return (
     <div
-      className={`h-full min-h-0 w-full flex flex-col overflow-hidden relative selection:bg-purple-500/30 bg-[var(--app-bg)] ${app.isDark ? 'text-slate-200' : 'text-slate-800'}`}
+      className={`h-[100dvh] w-full flex flex-col overflow-hidden relative selection:bg-purple-500/30 bg-[var(--app-bg)] ${app.isDark ? 'text-slate-200' : 'text-slate-800'}`}
     >
       <AppBackground isDark={app.isDark} />
 
