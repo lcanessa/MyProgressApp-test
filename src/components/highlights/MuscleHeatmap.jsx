@@ -17,12 +17,12 @@ const LEVEL_COLORS = ['#475569', '#22c55e', '#eab308', '#f97316', '#dc2626'];
 // Cada grupo puede tener múltiples nodos (ej: izquierdo + derecho).
 // ─────────────────────────────────────────────────────────────────────────────
 const MUSCLE_MAPPING = {
-  Pecho:   [],  // ej: ['Pectoralis_Major_L', 'Pectoralis_Major_R']
-  Espalda: [],  // ej: ['Latissimus_Dorsi_L', 'Trapezius']
-  Piernas: [],  // ej: ['Quadriceps_L', 'Hamstring_R', 'Gluteus_R']
-  Hombros: [],  // ej: ['Deltoid_L', 'Deltoid_R']
-  Brazos:  [],  // ej: ['Biceps_L', 'Triceps_R']
-  Core:    [],  // ej: ['Rectus_Abdominis', 'Obliques']
+  Pecho:   ['Object_29'],
+  Espalda: ['Object_13'],
+  Piernas: ['Object_9'],
+  Hombros: ['Object_5'],
+  Brazos:  ['Object_33'],
+  Core:    ['Object_23'],
 };
 
 const LEGEND = [
