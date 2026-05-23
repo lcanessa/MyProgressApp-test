@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useMemo, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF } from '@react-three/drei';
+import { OrbitControls, useGLTF, Bounds, Center } from '@react-three/drei';
 import * as THREE from 'three';
 import { muscleHeatColor } from '../../utils/highlights';
 
@@ -95,7 +95,7 @@ function HumanModel({ muscleStats, isDark }) {
     });
   }, [statsByMuscle, globalLevel, isDark]);
 
-  return <primitive object={clonedScene} />;
+  return <primitive object={clonedScene} dispose={null} />;
 }
 
 // Preload para que empiece a cargar antes de renderizar
@@ -103,28 +103,39 @@ useGLTF.preload('/scene.gltf');
 
 // ─── Escena completa ───────────────────────────────────────────────────────────
 
+function LoadingBody({ isDark }) {
+  return (
+    <mesh>
+      <boxGeometry args={[0.01, 0.01, 0.01]} />
+      <meshBasicMaterial color={isDark ? '#334155' : '#cbd5e1'} />
+    </mesh>
+  );
+}
+
 function BodyScene3D({ muscleStats, isDark }) {
-  const bgColor = isDark ? '#0f172a' : '#f8fafc';
+  const bgColor = isDark ? '#0f172a' : '#f1f5f9';
 
   return (
     <div
       className="w-full rounded-2xl overflow-hidden"
-      style={{ height: 340 }}
+      style={{ height: 360 }}
     >
       <Canvas
-        camera={{ position: [0, 0.05, 2.6], fov: 42 }}
+        camera={{ fov: 45, near: 0.001, far: 1000 }}
         gl={{ antialias: true, alpha: false }}
         style={{ background: bgColor }}
       >
-        {/* Luz ambiental suave */}
-        <ambientLight intensity={isDark ? 0.5 : 0.7} />
-        {/* Luz principal desde arriba-frente */}
-        <directionalLight position={[1.5, 3, 2]} intensity={1.4} />
-        {/* Luz de relleno desde atrás */}
-        <directionalLight position={[-2, -1, -2]} intensity={0.3} />
+        <ambientLight intensity={isDark ? 0.55 : 0.75} />
+        <directionalLight position={[2, 4, 3]} intensity={1.4} castShadow={false} />
+        <directionalLight position={[-2, -1, -2]} intensity={0.35} />
 
-        <Suspense fallback={null}>
-          <HumanModel muscleStats={muscleStats} isDark={isDark} />
+        <Suspense fallback={<LoadingBody isDark={isDark} />}>
+          {/* Bounds auto-ajusta la cámara al bounding box real del modelo */}
+          <Bounds fit clip observe margin={1.1}>
+            <Center>
+              <HumanModel muscleStats={muscleStats} isDark={isDark} />
+            </Center>
+          </Bounds>
         </Suspense>
 
         <OrbitControls
@@ -133,8 +144,7 @@ function BodyScene3D({ muscleStats, isDark }) {
           minPolarAngle={Math.PI / 6}
           maxPolarAngle={(Math.PI * 5) / 6}
           autoRotate
-          autoRotateSpeed={0.6}
-          touches={{ ONE: 1, TWO: 0 }} // ONE=ROTATE, TWO=disabled
+          autoRotateSpeed={0.7}
         />
       </Canvas>
     </div>
