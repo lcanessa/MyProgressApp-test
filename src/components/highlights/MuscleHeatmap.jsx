@@ -79,7 +79,7 @@ const BACK_BLOBS = [
 
 function BodyView({ side, blobs, statsMap, isDark }) {
   const label = side === 'front' ? 'Frente' : 'Espalda';
-  const src   = side === 'front' ? '/cuerpo_frente.png' : '/cuerpo_espalda.png';
+  const src   = side === 'front' ? '/muscle-front.png' : '/muscle-back.png';
   const filterId = `mhm-blur-${side}`;
 
   return (
