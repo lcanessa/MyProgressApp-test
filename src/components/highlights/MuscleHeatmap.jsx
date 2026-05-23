@@ -10,15 +10,19 @@ const MUSCLE_GROUPS_LIST = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 
 
 const LEVEL_COLORS = ['#475569', '#22c55e', '#eab308', '#f97316', '#dc2626'];
 
-// ── Mapping: keyword (lowercase) → grupo muscular de la app ──────────────────
-// Cuando veamos los nombres reales del modelo (via console.log), completamos aquí.
-const MUSCLE_KEYWORDS = {
-  Pecho:   ['pecto', 'pectoral', 'chest', 'pecho'],
-  Espalda: ['espalda', 'dorsal', 'latissimus', 'lat_', 'trapezius', 'trap', 'back', 'rhomboid', 'teres'],
-  Piernas: ['leg', 'pierna', 'quad', 'femor', 'hamstring', 'glute', 'gluteus', 'calf', 'gastro', 'soleus', 'tibial'],
-  Hombros: ['hombro', 'shoulder', 'delt', 'deltoid'],
-  Brazos:  ['brazo', 'arm', 'bicep', 'tricep', 'brachial', 'forearm', 'antebra'],
-  Core:    ['core', 'abs', 'abdom', 'oblique', 'rectus_ab', 'transverse'],
+// ── MUSCLE MAPPING ────────────────────────────────────────────────────────────
+// Completar con los nombres reales de los nodos del GLB.
+// Para descubrirlos: abrí la app, andá a Cuerpo y tocá cada zona del modelo
+// → la consola mostrará: [MuscleHeatmap] Clickeaste: "NombreDelNodo"
+// Cada grupo puede tener múltiples nodos (ej: izquierdo + derecho).
+// ─────────────────────────────────────────────────────────────────────────────
+const MUSCLE_MAPPING = {
+  Pecho:   [],  // ej: ['Pectoralis_Major_L', 'Pectoralis_Major_R']
+  Espalda: [],  // ej: ['Latissimus_Dorsi_L', 'Trapezius']
+  Piernas: [],  // ej: ['Quadriceps_L', 'Hamstring_R', 'Gluteus_R']
+  Hombros: [],  // ej: ['Deltoid_L', 'Deltoid_R']
+  Brazos:  [],  // ej: ['Biceps_L', 'Triceps_R']
+  Core:    [],  // ej: ['Rectus_Abdominis', 'Obliques']
 };
 
 const LEGEND = [
@@ -31,71 +35,70 @@ const LEGEND = [
 
 const formatSets = (n) => n === 1 ? '1 serie' : `${n} series`;
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
+// ─── Lookup inverso: nodeName → muscleName ─────────────────────────────────
 
-function getMuscleFromNodeName(name) {
-  const lower = name.toLowerCase();
-  for (const [muscle, keywords] of Object.entries(MUSCLE_KEYWORDS)) {
-    if (keywords.some((kw) => lower.includes(kw))) return muscle;
-  }
-  return null;
-}
+const NODE_TO_MUSCLE = (() => {
+  const map = {};
+  Object.entries(MUSCLE_MAPPING).forEach(([muscle, names]) => {
+    names.forEach((n) => { map[n] = muscle; });
+  });
+  return map;
+})();
 
 // ─── Modelo 3D ─────────────────────────────────────────────────────────────────
 
 function HumanModel({ muscleStats, isDark }) {
-  const { nodes, scene } = useGLTF('/male_full_body.glb');
-  const matsRef = useRef(new Map()); // nodeName → cloned material
+  const { scene } = useGLTF('/male_full_body.glb');
+  const matsRef = useRef(new Map()); // meshName → { mesh, mat }
 
-  // Loguear todos los nodos disponibles (solo en dev) para ajustar el mapping
+  // ── Primera carga: loguear nombres y clonar materiales ──────────────────────
   useEffect(() => {
-    const meshNames = Object.entries(nodes)
-      .filter(([, n]) => n.isMesh)
-      .map(([name]) => name);
-    console.log('[MuscleHeatmap] Mesh nodes en el modelo:', meshNames);
-  }, [nodes]);
+    const names = [];
+    const map   = new Map();
 
-  // Primera pasada: clonar y reemplazar todos los materiales
-  useEffect(() => {
-    const map = new Map();
-    Object.entries(nodes).forEach(([name, node]) => {
-      if (!node.isMesh) return;
-      const src = Array.isArray(node.material) ? node.material[0] : node.material;
-      const mat = src
-        ? src.clone()
-        : new THREE.MeshStandardMaterial();
-      mat.metalness = 0.08;
-      mat.roughness  = 0.7;
-      mat.side = THREE.DoubleSide;
-      if (Array.isArray(node.material)) {
-        node.material = node.material.map(() => mat);
-      } else {
-        node.material = mat;
-      }
-      map.set(name, mat);
+    scene.traverse((child) => {
+      if (!child.isMesh) return;
+      names.push(child.name);
+
+      // Clonar material para que cada mesh tenga el suyo propio
+      const mat = new THREE.MeshStandardMaterial({
+        metalness: 0.08,
+        roughness: 0.68,
+        side: THREE.DoubleSide,
+      });
+      child.material = mat;
+      map.set(child.name, { mesh: child, mat });
     });
-    matsRef.current = map;
-  }, [nodes]);
 
-  // Segunda pasada: colorear en vivo cuando cambian las stats
+    matsRef.current = map;
+    console.log('[MuscleHeatmap] Meshes disponibles (tocá uno para identificarlo):', names);
+  }, [scene]);
+
+  // ── Actualizar colores en vivo cuando cambian las stats ─────────────────────
   useEffect(() => {
     const statsByMuscle = Object.fromEntries(muscleStats.map((m) => [m.muscle, m]));
-    const globalLevel   = Math.max(0, ...muscleStats.map((m) => m.colorLevel));
 
-    matsRef.current.forEach((mat, name) => {
-      const muscleName = getMuscleFromNodeName(name);
+    matsRef.current.forEach(({ mat }, name) => {
+      const muscleName = NODE_TO_MUSCLE[name];
       const stat  = muscleName ? statsByMuscle[muscleName] : null;
-      const level = stat?.colorLevel ?? globalLevel;
+      const level = stat?.colorLevel ?? 0;
       const hex   = LEVEL_COLORS[level];
 
-      // Base: tono piel/músculo + emissive con el calor
-      mat.color = new THREE.Color(isDark ? '#b89070' : '#c8a882');
-      mat.emissive = new THREE.Color(hex);
-      mat.emissiveIntensity = level === 0 ? 0.03 : 0.45;
+      // Sin mapping → color carne base; con mapping → tono calor emissive
+      mat.color.set(isDark ? '#a07858' : '#b8916a');
+      mat.emissive.set(hex);
+      mat.emissiveIntensity = level === 0 ? 0.02 : 0.5;
     });
   }, [muscleStats, isDark]);
 
-  return <primitive object={scene} dispose={null} />;
+  // ── Click: imprime el nombre del mesh tocado en la consola ─────────────────
+  const handleClick = (e) => {
+    e.stopPropagation();
+    const name = e.object?.name;
+    if (name) console.log(`[MuscleHeatmap] Clickeaste: "${name}"`);
+  };
+
+  return <primitive object={scene} dispose={null} onClick={handleClick} />;
 }
 
 useGLTF.preload('/male_full_body.glb');
