@@ -222,10 +222,10 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
   const hasData  = muscleStats.some(m => m.progress > 0.02);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-2">
 
       {/* ── Vistas del cuerpo ──────────────────────────────────────────── */}
-      <div className="flex gap-4 justify-center px-2">
+      <div className="flex gap-2 justify-center px-1">
         <BodyView side="front" blobs={FRONT_BLOBS} statsMap={statsMap} isDark={isDark} />
         <BodyView side="back"  blobs={BACK_BLOBS}  statsMap={statsMap} isDark={isDark} />
       </div>
@@ -250,7 +250,6 @@ export default function MuscleHeatmap({ diary, routines, library, isDark, select
             ))}
           </div>
       </div>
-
       {/* ── Lista de músculos ──────────────────────────────────────────── */}
       {hasData ? (
         <div className={`rounded-2xl px-4 py-3.5 space-y-2.5 ${isDark ? 'bg-white/5' : 'bg-slate-50 border border-slate-200'}`}>

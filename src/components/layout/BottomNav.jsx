@@ -27,7 +27,7 @@ export default function BottomNav({ app }) {
               <button
                 key={tab.id}
                 onClick={() => app.setActiveTab(tab.id)}
-                className={`relative flex items-center justify-center w-14 h-14 -mt-5 rounded-2xl shadow-lg transition-all duration-300 ${
+                className={`relative flex items-center justify-center w-14 h-14 -mt-5 rounded-full shadow-lg transition-all duration-300 ${
                   isActive
                     ? 'bg-purple-500 text-white shadow-purple-500/50 scale-105'
                     : (app.isDark
