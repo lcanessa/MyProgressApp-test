@@ -17,7 +17,7 @@ export default defineConfig({
       filename: 'sw.js',
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        globIgnores: ['**/muscle-front.png', '**/muscle-back.png', '**/scene.gltf', '**/scene.bin', '**/*.glb'],
+        globIgnores: [],
       },
       devOptions: {
         enabled: true,

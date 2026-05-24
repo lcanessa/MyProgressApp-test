@@ -1,9 +1,8 @@
-import { Dumbbell, ClipboardList, List, Crown, PersonStanding } from 'lucide-react';
+import { Dumbbell, ClipboardList, List, Crown } from 'lucide-react';
 
-// Orden: Destacados · Cuerpo · [Datos del día – centro destacado] · Rutinas · Catálogo
+// Orden: Destacados · [Datos del día – centro destacado] · Rutinas · Catálogo
 const TABS = [
   { id: 'highlights', icon: <Crown        size={20} strokeWidth={2.5} />, center: false },
-  { id: 'body',       icon: <PersonStanding size={20} strokeWidth={2.5} />, center: false },
   { id: 'workout',    icon: <Dumbbell     size={22} strokeWidth={2.8} />, center: true  },
   { id: 'edit',       icon: <ClipboardList size={20} strokeWidth={2.5} />, center: false },
   { id: 'library',    icon: <List         size={20} strokeWidth={2.5} />, center: false },

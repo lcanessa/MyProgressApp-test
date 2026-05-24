@@ -13,7 +13,6 @@ import EditRoutineTab from './features/edit/EditRoutineTab';
 import LibraryTab from './features/library/LibraryTab';
 import SettingsTab from './features/settings/SettingsTab';
 import HighlightsTab from './features/highlights/HighlightsTab';
-import BodyTab from './features/body/BodyTab';
 import { refreshAppViewport } from './hooks/useAppViewport';
 import { applyAppTheme } from './utils/theme';
 import DeleteRoutineModal from './modals/DeleteRoutineModal';
@@ -70,7 +69,6 @@ export default function App() {
           {app.activeTab === 'highlights' && <HighlightsTab app={app} />}
           {app.activeTab === 'edit' && <EditRoutineTab app={app} />}
           {app.activeTab === 'library' && <LibraryTab app={app} />}
-          {app.activeTab === 'body' && <BodyTab app={app} />}
           {app.activeTab === 'settings' && <SettingsTab app={app} pwaUpdate={pwaUpdate} />}
         </div>
       </main>
