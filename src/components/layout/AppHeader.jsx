@@ -1,4 +1,4 @@
-import { CalendarDays, ClipboardList, List } from 'lucide-react';
+import { CalendarDays, ClipboardList, List, Settings } from 'lucide-react';
 import MyProgressLogo from '../brand/MyProgressLogo';
 import TabPageTitle from './TabPageTitle';
 import DayCalendarStrip from './DayCalendarStrip';
