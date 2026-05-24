@@ -1,4 +1,4 @@
-import { CalendarDays, ClipboardList, List, Settings } from 'lucide-react';
+import { CalendarDays, ClipboardList, List } from 'lucide-react';
 import MyProgressLogo from '../brand/MyProgressLogo';
 import TabPageTitle from './TabPageTitle';
 import DayCalendarStrip from './DayCalendarStrip';
@@ -12,17 +12,6 @@ export default function AppHeader({ app }) {
         <MyProgressLogo isDark={app.isDark} />
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => app.setActiveTab('settings')}
-            className={`p-2 rounded-full transition-colors ${
-              app.activeTab === 'settings'
-                ? app.isDark ? 'text-purple-400 bg-white/10' : 'text-purple-600 bg-purple-50'
-                : app.isDark ? 'text-slate-400 hover:text-slate-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/80'
-            }`}
-          >
-            <Settings size={18} />
-          </button>
-
           {app.activeTab === 'workout' && (
             <div className="flex items-center gap-1 animate-in fade-in">
               <button
