@@ -10,9 +10,14 @@ const TABS = [
 ];
 
 export default function BottomNav({ app }) {
+  const handleNav = (e, tabId) => {
+    if (e.type === 'pointerdown') e.preventDefault();
+    app.setActiveTab(tabId);
+  };
+
   return (
     <nav 
-      className={`fixed bottom-0 left-0 w-full z-40 flex flex-col transition-colors duration-500 ${
+      className={`fixed bottom-0 left-0 w-full z-40 flex flex-col touch-none transition-colors duration-500 ${
         app.isDark
           ? 'bg-[#0f172a]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]'
           : 'bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-[0_-10px_40px_rgba(100,100,111,0.05)]'
@@ -27,7 +32,8 @@ export default function BottomNav({ app }) {
             return (
               <div key={tab.id} className="relative flex-1 flex justify-center h-full items-center">
                 <button
-                  onClick={() => app.setActiveTab(tab.id)}
+                  onPointerDown={(e) => handleNav(e, tab.id)}
+                  onClick={(e) => handleNav(e, tab.id)}
                   className={`absolute -top-5 flex items-center justify-center w-[3.5rem] h-[3.5rem] rounded-full transition-all duration-300 ${
                     isActive
                       ? 'bg-purple-500 text-white scale-105 shadow-[0_4px_20px_rgba(168,85,247,0.5)]'
@@ -45,7 +51,8 @@ export default function BottomNav({ app }) {
           return (
             <button
               key={tab.id}
-              onClick={() => app.setActiveTab(tab.id)}
+              onPointerDown={(e) => handleNav(e, tab.id)}
+              onClick={(e) => handleNav(e, tab.id)}
               className={`flex-1 flex flex-col items-center justify-center h-full transition-all duration-300 ${
                 isActive
                   ? (app.isDark ? 'text-purple-400' : 'text-purple-600')
