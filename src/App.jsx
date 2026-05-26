@@ -63,7 +63,18 @@ export default function App() {
 
       <AppHeader app={app} />
 
-      <main ref={app.mainRef} className="flex-1 w-full relative z-10 [mask-image:linear-gradient(to_bottom,transparent_0%,black_3rem,black_calc(100%-5rem),transparent_100%)]">
+      {/* Fade superior fijo — justo debajo del header, sigue al contenido al scrollear */}
+      <div
+        className="fixed left-0 right-0 z-20 pointer-events-none h-10"
+        style={{
+          top: 'var(--header-h, 56px)',
+          background: app.isDark
+            ? 'linear-gradient(to bottom, #050505 0%, transparent 100%)'
+            : 'linear-gradient(to bottom, #f8fafc 0%, transparent 100%)',
+        }}
+      />
+
+      <main ref={app.mainRef} className="flex-1 w-full relative z-10 [mask-image:linear-gradient(to_bottom,black_85%,transparent_100%)]">
         <div className="max-w-md mx-auto px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] space-y-4">
           {app.activeTab === 'workout' && <WorkoutTab app={app} />}
           {app.activeTab === 'highlights' && <HighlightsTab app={app} />}

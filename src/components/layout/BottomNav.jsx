@@ -39,7 +39,7 @@ export default function BottomNav({ app }) {
                     <button
                       onTouchStart={(e) => handleNav(e, tab.id)}
                       onClick={(e) => handleNav(e, tab.id)}
-                      className={`absolute -top-5 flex items-center justify-center w-[3.5rem] h-[3.5rem] rounded-full transition-all duration-300 ${
+                      className={`absolute -top-4 flex items-center justify-center w-[3.25rem] h-[3.25rem] rounded-full transition-all duration-300 ${
                         isActive
                           ? 'bg-purple-500 text-white scale-105 shadow-[0_4px_20px_rgba(168,85,247,0.6)]'
                           : (app.isDark
