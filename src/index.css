@@ -71,26 +71,16 @@ html[data-theme='light'] {
   --scroll-fade: #f8fafc;
 }
 
-html, body {
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
-  /* Coincide con el color de la BottomNav para tapar el hueco del Safe Area en iOS */
   background-color: #0f172a !important;
-  overflow: hidden;
-  overscroll-behavior: none;
-  overscroll-behavior-y: none;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
-}
-
-/* #root solo necesita tomar el tamaño del hijo fixed */
-#root {
-  width: 100%;
-  height: 100%;
-  background-color: #050505;
 }
 
 /* Header único: sin borde ni tinte opaco — el degradé se ve continuo detrás del logo y títulos */
