@@ -19,8 +19,8 @@ export default function BottomNav({ app }) {
     <nav 
       className={`fixed bottom-0 left-0 w-full z-40 flex flex-col transition-colors duration-500 ${
         app.isDark
-          ? 'bg-[#0f172a]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]'
-          : 'bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-[0_-10px_40px_rgba(100,100,111,0.05)]'
+          ? 'bg-[#0f172a]/50 backdrop-blur-3xl backdrop-saturate-[180%] border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.3)]'
+          : 'bg-white/50 backdrop-blur-3xl backdrop-saturate-[180%] border-t border-slate-200/60 shadow-[0_-10px_40px_rgba(100,100,111,0.05)]'
       }`}
     >
       {/* Contenedor estricto para los íconos */}
