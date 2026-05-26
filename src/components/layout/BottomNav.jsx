@@ -11,32 +11,24 @@ const TABS = [
 
 export default function BottomNav({ app }) {
   return (
-    <nav
-      className={`fixed bottom-0 left-0 w-full z-40 transition-colors duration-500 ${
+    <nav 
+      className={`fixed bottom-0 left-0 w-full z-40 flex flex-col transition-colors duration-500 ${
         app.isDark
-          ? 'bg-[#0f172a] backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]'
-          : 'bg-white backdrop-blur-xl border-t border-slate-200 shadow-[0_-10px_40px_rgba(100,100,111,0.05)]'
+          ? 'bg-[#0f172a]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]'
+          : 'bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-[0_-10px_40px_rgba(100,100,111,0.05)]'
       }`}
-      style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)' }}
     >
-      {/* "Pollera": bloque que cuelga por debajo para cubrir cualquier hueco del Safe Area */}
-      <div
-        className="absolute top-full left-0 w-full h-[50px]"
-        style={{ backgroundColor: app.isDark ? '#0f172a' : '#ffffff' }}
-      />
-
-      {/* Contenedor centralizado para no estirar demasiado los íconos en pantallas anchas */}
+      {/* Contenedor estricto para los íconos */}
       <div className="w-full max-w-md mx-auto px-2 flex justify-between items-center relative h-16">
         {TABS.map((tab) => {
           const isActive = app.activeTab === tab.id;
 
           if (tab.center) {
-            // Botón central: anclado absoluto para que sobresalga de la barra hacia arriba
             return (
               <div key={tab.id} className="relative flex-1 flex justify-center h-full items-center">
                 <button
                   onClick={() => app.setActiveTab(tab.id)}
-                  className={`absolute -top-6 flex items-center justify-center w-[3.5rem] h-[3.5rem] rounded-full transition-all duration-300 ${
+                  className={`absolute -top-5 flex items-center justify-center w-[3.5rem] h-[3.5rem] rounded-full transition-all duration-300 ${
                     isActive
                       ? 'bg-purple-500 text-white scale-105 shadow-[0_4px_20px_rgba(168,85,247,0.5)]'
                       : (app.isDark
@@ -61,11 +53,13 @@ export default function BottomNav({ app }) {
               }`}
             >
               {tab.icon}
-              {/* Si quisieras agregar texto debajo del icono en el futuro, iría aquí */}
             </button>
           );
         })}
       </div>
+
+      {/* Bloque fantasma exclusivo para el Safe Area de iOS */}
+      <div className="w-full" style={{ height: 'env(safe-area-inset-bottom)' }} />
     </nav>
   );
 }
