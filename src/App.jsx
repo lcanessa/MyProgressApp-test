@@ -63,7 +63,7 @@ export default function App() {
 
       <AppHeader app={app} />
 
-      <main ref={app.mainRef} className="flex-1 w-full relative z-10 [mask-image:linear-gradient(to_bottom,transparent_0%,black_3rem,black_calc(100%-5rem),transparent_100%)]">
+      <main ref={app.mainRef} className="flex-1 w-full relative z-10 [mask-image:linear-gradient(to_bottom,black_80%,transparent_100%)]">
         <div className="max-w-md mx-auto px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] space-y-4">
           {app.activeTab === 'workout' && <WorkoutTab app={app} />}
           {app.activeTab === 'highlights' && <HighlightsTab app={app} />}
