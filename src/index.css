@@ -71,44 +71,23 @@ html[data-theme='light'] {
   --scroll-fade: #f8fafc;
 }
 
-html {
-  height: 100%;
-  height: 100dvh;
-  height: 100svh;
-  height: -webkit-fill-available;
-  min-height: 100%;
-  min-height: 100dvh;
-  min-height: 100svh;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-  background-color: var(--app-bg, #050505);
-}
-
-body {
+html, body {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
-  height: 100dvh;
-  height: 100svh;
-  min-height: 100%;
-  min-height: 100dvh;
-  min-height: 100svh;
+  background-color: #050505;
   overflow: hidden;
   overscroll-behavior: none;
-  background-color: inherit;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
-/* inset:0 llena el viewport; sin height fija en px (evita franja negra en iOS PWA) */
+/* #root solo necesita tomar el tamaño del hijo fixed */
 #root {
-  position: fixed;
-  inset: 0;
   width: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  background-color: inherit;
+  height: 100%;
+  background-color: #050505;
 }
 
 /* Header único: sin borde ni tinte opaco — el degradé se ve continuo detrás del logo y títulos */

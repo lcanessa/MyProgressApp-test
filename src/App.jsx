@@ -38,7 +38,7 @@ export default function App() {
 
   return (
     <div
-      className={`h-[100dvh] w-full flex flex-col overflow-hidden relative selection:bg-purple-500/30 bg-[var(--app-bg)] ${app.isDark ? 'text-slate-200' : 'text-slate-800'}`}
+      className={`fixed inset-0 w-full h-[100dvh] overflow-hidden flex flex-col selection:bg-purple-500/30 ${app.isDark ? 'bg-[#050505] text-slate-200' : 'bg-[#f8fafc] text-slate-800'}`}
     >
       <AppBackground isDark={app.isDark} />
 
@@ -63,8 +63,8 @@ export default function App() {
 
       <AppHeader app={app} />
 
-      <main ref={app.mainRef} className="app-scroll no-scrollbar w-full relative z-10">
-        <div className="max-w-md mx-auto px-4 pt-4 pb-content-nav space-y-4">
+      <main ref={app.mainRef} className="flex-1 overflow-y-auto no-scrollbar w-full relative z-10">
+        <div className="max-w-md mx-auto px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] space-y-4">
           {app.activeTab === 'workout' && <WorkoutTab app={app} />}
           {app.activeTab === 'highlights' && <HighlightsTab app={app} />}
           {app.activeTab === 'edit' && <EditRoutineTab app={app} />}
