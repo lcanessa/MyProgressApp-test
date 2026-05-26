@@ -35,21 +35,24 @@ export default function BottomNav({ app }) {
 
               if (tab.center) {
                 return (
-                  <div key={tab.id} className="relative flex-1 flex justify-center h-full items-center">
-                    <button
-                      onTouchStart={(e) => handleNav(e, tab.id)}
-                      onClick={(e) => handleNav(e, tab.id)}
-                      className={`absolute -top-4 flex items-center justify-center w-[3.25rem] h-[3.25rem] rounded-full transition-all duration-300 ${
-                        isActive
-                          ? 'bg-purple-500 text-white scale-105 shadow-[0_4px_20px_rgba(168,85,247,0.6)]'
-                          : (app.isDark
-                              ? 'bg-purple-600 text-white hover:bg-purple-500 shadow-lg shadow-black/50'
-                              : 'bg-purple-500 text-white hover:bg-purple-600 shadow-lg shadow-purple-500/30')
-                      }`}
-                    >
+                  <button
+                    key={tab.id}
+                    onTouchStart={(e) => handleNav(e, tab.id)}
+                    onClick={(e) => handleNav(e, tab.id)}
+                    className={`flex-1 flex items-center justify-center h-full transition-all duration-300 ${
+                      isActive ? 'text-purple-400' : (app.isDark ? 'text-purple-300' : 'text-purple-500')
+                    }`}
+                  >
+                    <div className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
+                      isActive
+                        ? 'bg-purple-500 text-white shadow-[0_4px_20px_rgba(168,85,247,0.6)]'
+                        : (app.isDark
+                            ? 'bg-purple-600/80 text-white shadow-lg shadow-black/40'
+                            : 'bg-purple-500 text-white shadow-lg shadow-purple-500/30')
+                    }`}>
                       {tab.icon}
-                    </button>
-                  </div>
+                    </div>
+                  </button>
                 );
               }
 

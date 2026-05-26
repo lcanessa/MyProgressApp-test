@@ -7,16 +7,11 @@ import WorkoutProgressBar from './WorkoutProgressBar';
 
 export default function AppHeader({ app }) {
   return (
-    <header
-      className={`sticky top-0 z-30 shrink-0 flex flex-col pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-3xl backdrop-saturate-[180%] transition-colors duration-500 ${
-        app.isDark
-          ? 'bg-[#050505]/50 border-b border-white/5'
-          : 'bg-white/50 border-b border-slate-200/60'
-      }`}
-      ref={(el) => {
-        if (el) document.documentElement.style.setProperty('--header-h', el.offsetHeight + 'px');
-      }}
-    >
+    <header className={`sticky top-0 z-30 shrink-0 flex flex-col pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-3xl backdrop-saturate-[180%] transition-colors duration-500 ${
+      app.isDark
+        ? 'bg-[#050505]/50 border-b border-white/5'
+        : 'bg-white/50 border-b border-slate-200/60'
+    }`}>
       <div className="flex justify-between items-center px-4 pt-2 pb-3">
         <MyProgressLogo isDark={app.isDark} />
 
