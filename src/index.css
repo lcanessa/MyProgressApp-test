@@ -81,6 +81,8 @@ html, body {
   overscroll-behavior: none;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overscroll-behavior-y: none; /* Evita el "pull-to-refresh" o rebote molesto de Safari */
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* #root solo necesita tomar el tamaño del hijo fixed */
