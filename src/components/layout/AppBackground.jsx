@@ -1,6 +1,6 @@
 export default function AppBackground({ isDark }) {
   return (
-    <div className="fixed inset-0 w-full h-full pointer-events-none z-[-1] overflow-hidden">
+    <div className="fixed inset-0 w-full h-full z-[-1] pointer-events-none overflow-hidden">
       <div
         className={`absolute -top-[10%] -left-[10%] w-[70vw] h-[70vw] max-w-[500px] max-h-[500px] rounded-full blur-[100px] ${isDark ? 'bg-purple-600/25' : 'bg-purple-300/40'}`}
       />
