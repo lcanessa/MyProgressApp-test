@@ -11,13 +11,20 @@ const TABS = [
 
 export default function BottomNav({ app }) {
   return (
-    <nav 
-      className={`fixed bottom-0 left-0 w-full z-40 pb-[env(safe-area-inset-bottom)] transition-colors duration-500 ${
+    <nav
+      className={`fixed bottom-0 left-0 w-full z-40 transition-colors duration-500 ${
         app.isDark
-          ? 'bg-[#0f172a]/90 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]'
-          : 'bg-white/90 backdrop-blur-xl border-t border-slate-200 shadow-[0_-10px_40px_rgba(100,100,111,0.05)]'
+          ? 'bg-[#0f172a] backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]'
+          : 'bg-white backdrop-blur-xl border-t border-slate-200 shadow-[0_-10px_40px_rgba(100,100,111,0.05)]'
       }`}
+      style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)' }}
     >
+      {/* "Pollera": bloque que cuelga por debajo para cubrir cualquier hueco del Safe Area */}
+      <div
+        className="absolute top-full left-0 w-full h-[50px]"
+        style={{ backgroundColor: app.isDark ? '#0f172a' : '#ffffff' }}
+      />
+
       {/* Contenedor centralizado para no estirar demasiado los íconos en pantallas anchas */}
       <div className="w-full max-w-md mx-auto px-2 flex justify-between items-center relative h-16">
         {TABS.map((tab) => {

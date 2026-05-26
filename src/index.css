@@ -76,12 +76,13 @@ html, body {
   padding: 0;
   width: 100%;
   height: 100%;
-  background-color: #050505;
+  /* Coincide con el color de la BottomNav para tapar el hueco del Safe Area en iOS */
+  background-color: #0f172a !important;
   overflow: hidden;
   overscroll-behavior: none;
+  overscroll-behavior-y: none;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  overscroll-behavior-y: none; /* Evita el "pull-to-refresh" o rebote molesto de Safari */
   -webkit-tap-highlight-color: transparent;
 }
 
