@@ -63,7 +63,7 @@ export default function App() {
 
       <AppHeader app={app} />
 
-      <main ref={app.mainRef} className="flex-1 w-full relative z-10">
+      <main ref={app.mainRef} className="w-full relative z-10">
         <div className="max-w-md mx-auto px-4 pt-4 pb-28 space-y-4">
           {app.activeTab === 'workout' && <WorkoutTab app={app} />}
           {app.activeTab === 'highlights' && <HighlightsTab app={app} />}
