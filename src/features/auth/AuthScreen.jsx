@@ -117,17 +117,6 @@ export default function AuthScreen({ isDark }) {
                   : <GoogleIcon />}
                 Continuar con Google
               </button>
-              <button
-                type="button"
-                disabled={!!oauthLoading}
-                onClick={() => handleOAuth('apple')}
-                className={`w-full flex items-center justify-center gap-3 py-3 rounded-xl border text-sm font-semibold transition disabled:opacity-50 ${oauthBtn}`}
-              >
-                {oauthLoading === 'apple'
-                  ? <div className="w-4 h-4 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
-                  : <AppleIcon />}
-                Continuar con Apple
-              </button>
 
               {/* Divider */}
               <div className={`flex items-center gap-3 pt-1 ${divider}`}>
