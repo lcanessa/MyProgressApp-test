@@ -16,7 +16,7 @@ import Last7DaysStrip from '../../components/highlights/Last7DaysStrip';
 import PersonalRecordsCard from '../../components/highlights/PersonalRecordsCard';
 import HomeGreeting from '../../components/highlights/HomeGreeting';
 import MuscleRadarChart from '../../components/highlights/MuscleRadarChart';
-export default function HighlightsTab({ app }) {
+export default function HighlightsTab({ app, firstName }) {
   const stats = useMemo(
     () => computeHighlights({ diary: app.diary, routines: app.routines, library: app.library }),
     [app.diary, app.routines, app.library]
@@ -27,7 +27,7 @@ export default function HighlightsTab({ app }) {
   if (!stats.hasData) {
     return (
       <div className="space-y-6 animate-in fade-in duration-300 pb-2">
-        <HomeGreeting app={app} weekStreak={0} />
+        <HomeGreeting app={app} weekStreak={0} firstName={firstName} />
         <div className="flex flex-col items-center justify-center text-center w-full px-2 py-6">
           <div
             className={`w-full max-w-[17rem] mx-auto rounded-3xl border p-8 flex flex-col items-center ${isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}
@@ -47,7 +47,7 @@ export default function HighlightsTab({ app }) {
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300 pb-2">
-      <HomeGreeting app={app} weekStreak={stats.weekStreak} />
+      <HomeGreeting app={app} weekStreak={stats.weekStreak} firstName={firstName} />
 
       {/* Hero racha semanal */}
       <div

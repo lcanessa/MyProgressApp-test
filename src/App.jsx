@@ -24,7 +24,7 @@ import MultiSelectModal from './modals/MultiSelectModal';
 import FullCalendarModal from './modals/FullCalendarModal';
 import ExerciseVideoModal from './modals/ExerciseVideoModal';
 
-function AppContent({ userId }) {
+function AppContent({ userId, firstName }) {
   const app = useGymApp(userId);
   const pwaUpdate = usePwaUpdate();
   useAppViewport();
@@ -71,10 +71,10 @@ function AppContent({ userId }) {
 
       <AppHeader app={app} />
 
-      <main ref={app.mainRef} className="flex-1 w-full relative z-10 [mask-image:linear-gradient(to_bottom,black_80%,transparent_100%)]">
+      <main ref={app.mainRef} className="flex-1 w-full relative z-10">
         <div className="max-w-md mx-auto px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] space-y-4">
           {app.activeTab === 'workout' && <WorkoutTab app={app} />}
-          {app.activeTab === 'highlights' && <HighlightsTab app={app} />}
+          {app.activeTab === 'highlights' && <HighlightsTab app={app} firstName={firstName} />}
           {app.activeTab === 'edit' && <EditRoutineTab app={app} />}
           {app.activeTab === 'library' && <LibraryTab app={app} />}
           {app.activeTab === 'settings' && <SettingsTab app={app} pwaUpdate={pwaUpdate} />}
@@ -98,9 +98,9 @@ function AppContent({ userId }) {
 }
 
 export default function App() {
-  const { user, loading } = useAuth();
+  const { user, loading, firstName } = useAuth();
 
   if (loading) return null;
   if (!user) return <AuthScreen isDark={true} />;
-  return <AppContent userId={user.id} />;
+  return <AppContent userId={user.id} firstName={firstName} />;
 }

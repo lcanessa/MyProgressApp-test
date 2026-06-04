@@ -14,8 +14,17 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const user = session?.user ?? null;
+  const meta = user?.user_metadata ?? {};
+  // Suporte email signup (first_name), Google OAuth (name / full_name), y fallback al email
+  const rawName = meta.first_name
+    || meta.name?.split(' ')[0]
+    || meta.full_name?.split(' ')[0]
+    || null;
+  const firstName = rawName || null;
+
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, loading: session === undefined }}>
+    <AuthContext.Provider value={{ session, user, loading: session === undefined, firstName }}>
       {children}
     </AuthContext.Provider>
   );

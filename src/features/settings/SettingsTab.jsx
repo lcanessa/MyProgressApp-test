@@ -1,12 +1,26 @@
-import { useRef } from 'react';
-import { Download, Upload, RefreshCw, Sun, Moon, LogOut } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Download, Upload, RefreshCw, Sun, Moon, LogOut, Check } from 'lucide-react';
 import { APP_VERSION_LABEL } from '../../constants/appVersion';
 import { supabase } from '../../services/supabase';
+import { useAuth } from '../../context/AuthContext';
 
 export default function SettingsTab({ app, pwaUpdate }) {
   const backupFileRef = useRef(null);
   const isChecking = pwaUpdate?.status === 'checking';
   const isUpdating = pwaUpdate?.status === 'updating';
+  const { firstName } = useAuth();
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [savingName, setSavingName] = useState(false);
+
+  async function handleSaveName() {
+    if (!nameInput.trim()) return;
+    setSavingName(true);
+    await supabase.auth.updateUser({ data: { first_name: nameInput.trim() } });
+    setSavingName(false);
+    setEditingName(false);
+    setNameInput('');
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -132,6 +146,54 @@ export default function SettingsTab({ app, pwaUpdate }) {
         <h3 className={`font-black tracking-widest text-xs mb-4 ${app.isDark ? 'text-purple-400' : 'text-purple-600'}`}>
           CUENTA
         </h3>
+
+        {/* Nombre */}
+        <div className="mb-3">
+          {!editingName ? (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-sm font-bold ${app.isDark ? 'text-white' : 'text-slate-800'}`}>
+                  {firstName ? firstName : 'Sin nombre'}
+                </p>
+                <p className={`text-xs ${app.isDark ? 'text-slate-500' : 'text-slate-400'}`}>Nombre de saludo</p>
+              </div>
+              <button
+                onClick={() => { setEditingName(true); setNameInput(firstName || ''); }}
+                className={`text-xs font-bold underline ${app.isDark ? 'text-purple-400' : 'text-purple-600'}`}
+              >
+                Editar
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                autoFocus
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                placeholder="Tu nombre..."
+                className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-semibold outline-none border transition-colors ${
+                  app.isDark
+                    ? 'bg-white/5 border-white/10 text-white focus:border-purple-500'
+                    : 'bg-slate-100 border-slate-200 text-slate-800 focus:border-purple-500'
+                }`}
+              />
+              <button
+                onClick={handleSaveName}
+                disabled={savingName}
+                className="px-3 py-2.5 rounded-xl bg-purple-600 text-white disabled:opacity-50"
+              >
+                <Check size={16} />
+              </button>
+              <button
+                onClick={() => setEditingName(false)}
+                className={`px-3 py-2.5 rounded-xl text-sm font-bold ${app.isDark ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}`}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </div>
+
         <button
           type="button"
           onClick={() => supabase.auth.signOut()}

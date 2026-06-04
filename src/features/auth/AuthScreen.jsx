@@ -27,6 +27,9 @@ export default function AuthScreen({ isDark }) {
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(null);
   const [error, setError] = useState('');
@@ -66,7 +69,19 @@ export default function AuthScreen({ isDark }) {
         if (error) throw error;
         setInfo('Te enviamos un email para restablecer tu contraseña.');
       } else if (mode === 'register') {
-        const { error } = await supabase.auth.signUp({ email, password });
+        if (password !== confirmPassword) throw new Error('Las contraseñas no coinciden.');
+        if (!firstName.trim()) throw new Error('El nombre es obligatorio.');
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              first_name: firstName.trim(),
+              last_name: lastName.trim(),
+              full_name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+            },
+          },
+        });
         if (error) throw error;
         setInfo('Revisá tu email para confirmar tu cuenta.');
       } else {
@@ -129,6 +144,25 @@ export default function AuthScreen({ isDark }) {
 
           {/* Email/password form */}
           <form onSubmit={handleSubmit} className="space-y-3">
+            {mode === 'register' && (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Nombre *"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className={inputCls}
+                />
+                <input
+                  type="text"
+                  placeholder="Apellido"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+            )}
             <input
               type="email"
               placeholder="Email"
@@ -143,6 +177,16 @@ export default function AuthScreen({ isDark }) {
                 placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
+                className={inputCls}
+              />
+            )}
+            {mode === 'register' && (
+              <input
+                type="password"
+                placeholder="Repetir contraseña"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 className={inputCls}
               />
