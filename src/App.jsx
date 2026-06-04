@@ -1,5 +1,7 @@
 import { useLayoutEffect } from 'react';
 import { useGymApp } from './hooks/useGymApp';
+import { useAuth } from './context/AuthContext';
+import AuthScreen from './features/auth/AuthScreen';
 import { useAppViewport } from './hooks/useAppViewport';
 import AppBackground from './components/layout/AppBackground';
 import AppHeader from './components/layout/AppHeader';
@@ -22,8 +24,8 @@ import MultiSelectModal from './modals/MultiSelectModal';
 import FullCalendarModal from './modals/FullCalendarModal';
 import ExerciseVideoModal from './modals/ExerciseVideoModal';
 
-export default function App() {
-  const app = useGymApp();
+function AppContent({ userId }) {
+  const app = useGymApp(userId);
   const pwaUpdate = usePwaUpdate();
   useAppViewport();
 
@@ -35,6 +37,12 @@ export default function App() {
     app.mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     refreshAppViewport();
   }, [app.activeTab]);
+
+  if (app.dataLoading) return (
+    <div className={`min-h-screen w-full flex items-center justify-center ${app.isDark ? 'bg-[#050505]' : 'bg-[#f8fafc]'}`}>
+      <div className="w-8 h-8 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
+    </div>
+  );
 
   return (
     <div
@@ -87,4 +95,12 @@ export default function App() {
       <BottomNav app={app} />
     </div>
   );
+}
+
+export default function App() {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+  if (!user) return <AuthScreen isDark={true} />;
+  return <AppContent userId={user.id} />;
 }

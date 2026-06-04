@@ -1,32 +1,23 @@
+import { useState } from 'react';
 import { Search, Plus, X, Save, Edit2, Trash2 } from 'lucide-react';
 import { MUSCLE_GROUPS } from '../../constants/muscles';
 import ExercisePlayButton from '../../components/exercise/ExercisePlayButton';
+import CatalogPicker from '../../components/exercise/CatalogPicker';
 
 export default function LibraryTab({ app }) {
+  const [showPicker, setShowPicker] = useState(false);
+
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
-    {app.showNewExForm ? (
-    <div className={`p-6 rounded-3xl border shadow-xl relative overflow-hidden ${app.isDark ? 'bg-[#121212] border-white/10' : 'bg-white border-slate-200'}`}>
-    <div className={`absolute top-0 right-0 w-32 h-32 blur-2xl rounded-full ${app.isDark ? 'bg-purple-600/10' : 'bg-purple-400/20'}`} />
-    <div className="flex justify-between items-center mb-5 relative z-10">
-    <h3 className={`font-black tracking-widest text-sm ${app.isDark ? 'text-white' : 'text-slate-800'}`}>NUEVO EJERCICIO</h3>
-    <button onClick={() => app.setShowNewExForm(false)} className={`p-1.5 rounded-full transition-colors ${app.isDark ? 'text-slate-400 hover:text-white bg-white/5' : 'text-slate-500 hover:text-slate-800 bg-slate-100'}`}><X size={16}/></button>
-    </div>
-    <div className="space-y-4 relative z-10">
-    <input placeholder="Nombre..." value={app.newExData.name} onChange={(e) => app.setNewExData({...app.newExData, name: e.target.value})} className={`w-full rounded-xl px-4 py-3.5 font-bold text-[16px] outline-none border transition-colors ${app.isDark ? 'bg-white/5 border-white/10 text-white focus:border-purple-500 placeholder-white/30' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 placeholder-slate-400'}`} />
-    <select value={app.newExData.muscle} onChange={(e) => app.setNewExData({...app.newExData, muscle: e.target.value})} className={`w-full rounded-xl px-4 py-3.5 font-bold text-[16px] outline-none border transition-colors ${app.isDark ? 'bg-[#1a1a1a] border-white/10 text-white focus:border-purple-500' : 'bg-white border-slate-200 text-slate-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500'}`}>
-    {MUSCLE_GROUPS.map(m => <option key={m} value={m}>{m}</option>)}
-    </select>
-    <button onClick={app.handleAddNewExercise} className={`w-full font-black py-3.5 rounded-xl mt-2 flex justify-center items-center gap-2 text-sm transition-colors shadow-lg ${app.isDark ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-600/20' : 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/30'}`}><Save size={18} /> Guardar Ejercicio</button>
-    </div>
-    </div>
+    {showPicker ? (
+      <CatalogPicker app={app} onClose={() => setShowPicker(false)} />
     ) : (
     <div className="flex gap-2 mb-6">
     <div className="relative flex-1">
     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-    <input placeholder="Buscar en catálogo..." value={app.searchTerm} onChange={(e) => app.setSearchTerm(e.target.value)} className={`w-full rounded-2xl py-3.5 pl-12 pr-4 text-[16px] font-bold shadow-xl outline-none transition-colors border ${app.isDark ? 'bg-[#121212] border-white/5 text-white focus:border-purple-500 placeholder-white/20' : 'bg-white border-slate-200 text-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-500 placeholder-slate-400'}`} />
+    <input placeholder="Buscar en mi biblioteca..." value={app.searchTerm} onChange={(e) => app.setSearchTerm(e.target.value)} className={`w-full rounded-2xl py-3.5 pl-12 pr-4 text-[16px] font-bold shadow-xl outline-none transition-colors border ${app.isDark ? 'bg-[#121212] border-white/5 text-white focus:border-purple-500 placeholder-white/20' : 'bg-white border-slate-200 text-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-500 placeholder-slate-400'}`} />
     </div>
-    <button onClick={() => app.setShowNewExForm(true)} className={`px-4 rounded-2xl shadow-lg transition-colors ${app.isDark ? 'bg-purple-600 text-white shadow-purple-600/20 hover:bg-purple-500' : 'bg-slate-800 text-white hover:bg-slate-700'}`}><Plus size={24} /></button>
+    <button onClick={() => setShowPicker(true)} className={`px-4 rounded-2xl shadow-lg transition-colors ${app.isDark ? 'bg-purple-600 text-white shadow-purple-600/20 hover:bg-purple-500' : 'bg-slate-800 text-white hover:bg-slate-700'}`}><Plus size={24} /></button>
     </div>
     )}
     

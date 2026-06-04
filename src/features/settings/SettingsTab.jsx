@@ -1,6 +1,7 @@
 import { useRef } from 'react';
-import { Download, Upload, RefreshCw, Sun, Moon } from 'lucide-react';
+import { Download, Upload, RefreshCw, Sun, Moon, LogOut } from 'lucide-react';
 import { APP_VERSION_LABEL } from '../../constants/appVersion';
+import { supabase } from '../../services/supabase';
 
 export default function SettingsTab({ app, pwaUpdate }) {
   const backupFileRef = useRef(null);
@@ -123,6 +124,25 @@ export default function SettingsTab({ app, pwaUpdate }) {
             <Upload size={16} /> Restaurar desde archivo…
           </button>
         </div>
+      </section>
+
+      <section
+        className={`rounded-3xl border p-5 ${app.isDark ? 'bg-[#121212]/80 border-white/10' : 'bg-white border-slate-200'}`}
+      >
+        <h3 className={`font-black tracking-widest text-xs mb-4 ${app.isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+          CUENTA
+        </h3>
+        <button
+          type="button"
+          onClick={() => supabase.auth.signOut()}
+          className={`w-full py-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border transition-colors ${
+            app.isDark
+              ? 'border-red-500/30 text-red-400 hover:bg-red-500/10'
+              : 'border-red-200 text-red-600 hover:bg-red-50'
+          }`}
+        >
+          <LogOut size={16} /> Cerrar sesión
+        </button>
       </section>
 
       <p

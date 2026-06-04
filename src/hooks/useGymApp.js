@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { MUSCLE_GROUPS } from '../constants/muscles';
 import { MOCK_LIBRARY, DEFAULT_BLOCKS, DEFAULT_ROUTINES } from '../constants/defaults';
-import { STORAGE_KEYS, LEGACY_KEYS_V27, SAMPLE_PROGRESS_LOADED_KEY, SAMPLE_CLEARED_KEY } from '../constants/storageKeys';
+import { STORAGE_KEYS, LEGACY_KEYS_V27 } from '../constants/storageKeys';
 import { toLocalISODate } from '../utils/date';
 import { loadSafely } from '../utils/storage';
+import { loadUserData, syncBlocks, syncLibrary, syncRoutines, syncDiaryDay, syncHistory } from '../services/db';
+import { supabase } from '../services/supabase';
 import { buildBackupPayload, parseBackupJson, mergeDiaryForTodayAfterRestore, BACKUP_FILE_PREFIX } from '../utils/backup';
 import { refreshAppViewport, VIEWPORT_REFRESH_EVENT } from './useAppViewport';
 import { applyAppTheme } from '../utils/theme';
@@ -39,45 +41,10 @@ import {
 } from '../utils/exerciseVideo';
 import { resolveRoutineIdForDate } from '../utils/routineRotation';
 
-/** Quita datos de ejemplo si quedaron de una versión anterior. */
-function clearLegacySampleData() {
-  if (typeof window === 'undefined') return;
-  if (localStorage.getItem(SAMPLE_PROGRESS_LOADED_KEY) !== '1') return;
-
-  localStorage.removeItem(STORAGE_KEYS.DIARY);
-  localStorage.removeItem(STORAGE_KEYS.HISTORY);
-  localStorage.removeItem(STORAGE_KEYS.BLOCKS);
-  localStorage.removeItem(STORAGE_KEYS.ROUTINES);
-  localStorage.removeItem(SAMPLE_PROGRESS_LOADED_KEY);
-  localStorage.removeItem(RECOMMENDED_ROUTINES_LOADED_KEY);
-  localStorage.setItem(SAMPLE_CLEARED_KEY, '1');
-}
-
-function loadInitialWorkoutState() {
-  if (typeof window === 'undefined') {
-    return {
-      blocks: DEFAULT_BLOCKS,
-      routines: DEFAULT_ROUTINES,
-      diary: {},
-      history: {},
-      recommendedLoaded: false,
-    };
-  }
-
-  clearLegacySampleData();
-
-  return {
-    blocks: loadSafely(STORAGE_KEYS.BLOCKS, DEFAULT_BLOCKS),
-    routines: loadSafely(STORAGE_KEYS.ROUTINES, DEFAULT_ROUTINES),
-    diary: sanitizeDiarySessions(loadSafely(STORAGE_KEYS.DIARY, {})),
-    history: sanitizeHistory(loadSafely(STORAGE_KEYS.HISTORY, {})),
-    recommendedLoaded: localStorage.getItem(RECOMMENDED_ROUTINES_LOADED_KEY) === '1',
-  };
-}
 
 const DEFAULT_REST_SECONDS = 90;
 
-export function useGymApp() {
+export function useGymApp(userId = null) {
 
 const [activeTab, setActiveTab] = useState('highlights');
 const calendarRef = useRef(null);
@@ -101,12 +68,13 @@ return next;
 });
 }, []);
 
-const [initialWorkout] = useState(() => loadInitialWorkoutState());
-const [routineBlocks, setRoutineBlocks] = useState(() => initialWorkout.blocks);
-const [library, setLibrary] = useState(() => loadSafely(STORAGE_KEYS.LIBRARY, MOCK_LIBRARY));
-const [routines, setRoutines] = useState(() => initialWorkout.routines);
-const [history, setHistory] = useState(() => initialWorkout.history);
-const [diary, setDiary] = useState(() => initialWorkout.diary);
+const [dataLoading, setDataLoading] = useState(true);
+const syncTimeoutRef = useRef({});
+const [routineBlocks, setRoutineBlocks] = useState(DEFAULT_BLOCKS);
+const [library, setLibrary] = useState([]);
+const [routines, setRoutines] = useState(DEFAULT_ROUTINES);
+const [history, setHistory] = useState({});
+const [diary, setDiary] = useState({});
 
 const activeBlocks = useMemo(() => routineBlocks.filter(b => !b.isArchived), [routineBlocks]);
 
@@ -127,9 +95,7 @@ const [libraryExerciseToDelete, setLibraryExerciseToDelete] = useState(null);
 const [routineExerciseIndexToRemove, setRoutineExerciseIndexToRemove] = useState(null);
 const [showFullCalendar, setShowFullCalendar] = useState(false);
 const [exerciseVideo, setExerciseVideo] = useState(null);
-const [hasLoadedRecommendedRoutines, setHasLoadedRecommendedRoutines] = useState(
-  () => initialWorkout.recommendedLoaded
-);
+const [hasLoadedRecommendedRoutines, setHasLoadedRecommendedRoutines] = useState(false);
 const [calendarViewDate, setCalendarViewDate] = useState(() => new Date());
 
 const [newExData, setNewExData] = useState({ name: '', muscle: MUSCLE_GROUPS[0] });
@@ -247,17 +213,60 @@ const activeIdx = activeBlocks.findIndex(b => b.id === blockId);
 return activeIdx >= 0 ? String.fromCharCode(65 + activeIdx) : '';
 }, [routineBlocks, activeBlocks]);
 
-// Guardado persistente
+// Tema en localStorage (preferencia de dispositivo)
 useEffect(() => {
-try {
-localStorage.setItem(STORAGE_KEYS.THEME, JSON.stringify(isDark));
-localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(routineBlocks));
-localStorage.setItem(STORAGE_KEYS.ROUTINES, JSON.stringify(routines));
-localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
-localStorage.setItem(STORAGE_KEYS.LIBRARY, JSON.stringify(library));
-localStorage.setItem(STORAGE_KEYS.DIARY, JSON.stringify(diary));
-} catch (e) { console.error("Error guardando", e); }
-}, [isDark, routineBlocks, routines, history, library, diary]);
+  try { localStorage.setItem(STORAGE_KEYS.THEME, JSON.stringify(isDark)); } catch {}
+}, [isDark]);
+
+// Carga inicial desde Supabase
+useEffect(() => {
+  if (!userId) return;
+  loadUserData(userId)
+    .then((data) => {
+      setRoutineBlocks(data.blocks);
+      setLibrary(data.library.length > 0 ? data.library : MOCK_LIBRARY);
+      setRoutines(data.routines);
+      setHistory(data.history);
+      setDiary(sanitizeDiarySessions(data.diary));
+      setHasLoadedRecommendedRoutines(!!localStorage.getItem(RECOMMENDED_ROUTINES_LOADED_KEY));
+    })
+    .catch((err) => console.error('Error cargando datos:', err))
+    .finally(() => setDataLoading(false));
+}, [userId]);
+
+// Helpers de sync con debounce
+function debouncedSync(key, fn, delay = 1500) {
+  clearTimeout(syncTimeoutRef.current[key]);
+  syncTimeoutRef.current[key] = setTimeout(fn, delay);
+}
+
+// Sync a Supabase
+useEffect(() => {
+  if (!userId || dataLoading) return;
+  debouncedSync('blocks', () => syncBlocks(userId, routineBlocks));
+}, [routineBlocks, userId, dataLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+useEffect(() => {
+  if (!userId || dataLoading) return;
+  debouncedSync('library', () => syncLibrary(userId, library));
+}, [library, userId, dataLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+useEffect(() => {
+  if (!userId || dataLoading) return;
+  debouncedSync('routines', () => syncRoutines(userId, routines, routineBlocks));
+}, [routines, userId, dataLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+useEffect(() => {
+  if (!userId || dataLoading || !selectedDate) return;
+  const day = diary[selectedDate];
+  if (!day) return;
+  debouncedSync('diary_' + selectedDate, () => syncDiaryDay(userId, selectedDate, day));
+}, [diary, selectedDate, userId, dataLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+useEffect(() => {
+  if (!userId || dataLoading) return;
+  debouncedSync('history', () => syncHistory(userId, history));
+}, [history, userId, dataLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
 // --- LÓGICA INTELIGENTE: Cambio de Fecha ---
 const changeDate = useCallback((newDateStr) => {
@@ -524,7 +533,7 @@ setTimeout(() => scrollRoutineIntoView(routineId), 50);
 
 // --- LÓGICA DE ABM RUTINAS ---
 const handleAddRoutineBlock = () => {
-const newId = 'r' + Date.now();
+const newId = crypto.randomUUID();
 const newBlock = { id: newId, name: 'Nueva Rutina' };
 setRoutineBlocks([...routineBlocks, newBlock]);
 setRoutines({ ...routines, [newId]: [] });
@@ -566,11 +575,36 @@ setShowDeleteModal(false);
 };
 
 // --- LÓGICA DE CATÁLOGO Y AGRUPACIÓN ---
+const handleAddFromCatalog = useCallback(async (catalogItem) => {
+  if (!catalogItem?.id || !userId) return;
+  if (library.some((ex) => ex.catalogId === catalogItem.id)) return; // ya existe
+  const exId = crypto.randomUUID();
+  const presetVideo = findVideoIdForName(catalogItem.name, library);
+  const newEx = {
+    id: exId,
+    name: catalogItem.name,
+    muscle: catalogItem.muscle,
+    catalogId: catalogItem.id,
+    ...(presetVideo ? { videoId: presetVideo } : {}),
+  };
+  setLibrary((prev) => [newEx, ...prev]);
+  // sync directo a Supabase
+  await supabase.from('user_exercises').upsert({
+    id: exId,
+    user_id: userId,
+    catalog_id: catalogItem.id,
+    name: catalogItem.name,
+    muscle_group: catalogItem.muscle,
+    video_id: presetVideo ?? null,
+  });
+  if (!presetVideo) attachVideoToLibraryEntry(exId, catalogItem.name, library, setLibrary);
+}, [userId, library]);
+
 const handleAddNewExercise = () => {
 if (!newExData.name || !newExData.name.trim()) return;
 const safeMuscle = newExData.muscle || MUSCLE_GROUPS[0];
 
-const exId = Date.now().toString();
+const exId = crypto.randomUUID();
 const exName = newExData.name.trim();
 const presetVideo = findVideoIdForName(exName, library);
 
@@ -947,6 +981,14 @@ localStorage.setItem(RECOMMENDED_ROUTINES_LOADED_KEY, '1');
 } else {
 localStorage.removeItem(RECOMMENDED_ROUTINES_LOADED_KEY);
 }
+// Sync todo a Supabase tras restaurar
+if (userId) {
+  syncBlocks(userId, d.routineBlocks);
+  syncLibrary(userId, d.library);
+  syncRoutines(userId, d.routines, d.routineBlocks);
+  syncHistory(userId, d.history);
+  Object.entries(mergedDiary).forEach(([date, day]) => syncDiaryDay(userId, date, day));
+}
 refreshAppLayout();
 resolve({ ok: true });
 };
@@ -991,6 +1033,7 @@ reader.readAsText(file, 'UTF-8');
     changeRoutineManually,
     handleAddRoutineBlock,
     confirmDeleteRoutine,
+    handleAddFromCatalog,
     handleAddNewExercise,
     startEditingEx, saveEditedEx,
     libraryExerciseToDelete, setLibraryExerciseToDelete,
@@ -1011,5 +1054,6 @@ reader.readAsText(file, 'UTF-8');
     importBackup,
     refreshAppLayout,
     showRecommendedRoutinesButton: !hasLoadedRecommendedRoutines,
+    dataLoading,
   };
 }

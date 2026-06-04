@@ -67,18 +67,96 @@ export function parseBackupJson(text) {
   const hasLoadedRecommendedRoutines =
     typeof d.hasLoadedRecommendedRoutines === 'boolean' ? d.hasLoadedRecommendedRoutines : false;
 
+  const remapped = remapBackupIds({
+    routineBlocks: d.routineBlocks,
+    routines: d.routines,
+    library: d.library,
+    diary: sanitizeDiarySessions(d.diary),
+  });
+
   return {
     ok: true,
     data: {
       isDark,
-      routineBlocks: d.routineBlocks,
-      routines: d.routines,
+      routineBlocks: remapped.routineBlocks,
+      routines: remapped.routines,
       history: sanitizeHistory(d.history),
-      library: d.library,
-      diary: sanitizeDiarySessions(d.diary),
+      library: remapped.library,
+      diary: remapped.diary,
       hasLoadedRecommendedRoutines,
     },
   };
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isUUID = (id) => UUID_RE.test(id);
+
+/**
+ * Remapea todos los IDs no-UUID de blocks y exercises a UUIDs válidos.
+ * Actualiza todas las referencias en routines, diary, y library.
+ */
+export function remapBackupIds(data) {
+  // Mapas de ID viejo → nuevo UUID
+  const blockMap = {};
+  const exMap = {};
+
+  // Remap blocks
+  const routineBlocks = data.routineBlocks.map((b) => {
+    const newId = isUUID(b.id) ? b.id : crypto.randomUUID();
+    blockMap[b.id] = newId;
+    return { ...b, id: newId };
+  });
+
+  // Remap library exercises
+  const library = data.library.map((ex) => {
+    const newId = isUUID(ex.id) ? ex.id : crypto.randomUUID();
+    exMap[ex.id] = newId;
+    return { ...ex, id: newId };
+  });
+
+  // Remap routines: keys (blockId) y exId dentro de cada lista
+  const routines = {};
+  for (const [oldBlockId, exercises] of Object.entries(data.routines)) {
+    const newBlockId = blockMap[oldBlockId] ?? oldBlockId;
+    routines[newBlockId] = (exercises || []).map((ex) => ({
+      ...ex,
+      exId: exMap[ex.exId] ?? ex.exId,
+    }));
+  }
+
+  // Remap diary: routineId, sessions keys, completed keys
+  const diary = {};
+  for (const [date, day] of Object.entries(data.diary)) {
+    const newRoutineId = day.routineId ? (blockMap[day.routineId] ?? day.routineId) : day.routineId;
+
+    // Remap sessions keys: "{oldBlockId}-{rest}" → "{newBlockId}-{rest}"
+    const sessions = {};
+    for (const [key, val] of Object.entries(day.sessions || {})) {
+      const newKey = remapKey(key, blockMap);
+      sessions[newKey] = val;
+    }
+
+    // Remap completed keys
+    const completed = {};
+    for (const [key, val] of Object.entries(day.completed || {})) {
+      const newKey = remapKey(key, blockMap);
+      completed[newKey] = val;
+    }
+
+    diary[date] = { ...day, routineId: newRoutineId, sessions, completed };
+  }
+
+  return { ...data, routineBlocks, library, routines, diary };
+}
+
+function remapKey(key, blockMap) {
+  // Keys have format "{blockId}-{rest...}" — replace only the blockId prefix
+  for (const [oldId, newId] of Object.entries(blockMap)) {
+    if (key.startsWith(oldId + '-')) {
+      return newId + key.slice(oldId.length);
+    }
+  }
+  return key;
 }
 
 /** Asegura entrada del día actual para no dejar la UI sin rutina activa. */

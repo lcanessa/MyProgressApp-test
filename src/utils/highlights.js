@@ -225,7 +225,7 @@ export function computePersonalRecords(diary, routines) {
       if (maxW <= 0) return;
 
       const prev = bestByName.get(name);
-      if (!prev || maxW > prev.weight) {
+      if (!prev || maxW > prev.weight || (maxW === prev.weight && repsAtMax > prev.reps)) {
         bestByName.set(name, {
           name,
           weight: maxW,
