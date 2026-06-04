@@ -46,7 +46,7 @@ function AppContent({ userId, firstName }) {
 
   return (
     <div
-      className={`min-h-screen w-full flex flex-col selection:bg-purple-500/30 ${app.isDark ? 'bg-[#050505] text-slate-200' : 'bg-[#f8fafc] text-slate-800'}`}
+      className={`h-[100dvh] w-full flex flex-col overflow-hidden selection:bg-purple-500/30 ${app.isDark ? 'bg-[#050505] text-slate-200' : 'bg-[#f8fafc] text-slate-800'}`}
     >
       <AppBackground isDark={app.isDark} />
 
@@ -71,7 +71,7 @@ function AppContent({ userId, firstName }) {
 
       <AppHeader app={app} />
 
-      <main ref={app.mainRef} className="flex-1 w-full relative z-10">
+      <main ref={app.mainRef} className="flex-1 w-full relative z-10 overflow-y-auto">
         <div className="max-w-md mx-auto px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] space-y-4">
           {app.activeTab === 'workout' && <WorkoutTab app={app} />}
           {app.activeTab === 'highlights' && <HighlightsTab app={app} firstName={firstName} />}
