@@ -312,11 +312,12 @@ localStorage.removeItem(key);
 });
 }, []);
 
-// Ejecución al iniciar
+// Ejecutar changeDate cuando los datos de Supabase terminan de cargar
 useEffect(() => {
-changeDate(toLocalISODate(new Date()));
+  if (dataLoading) return;
+  changeDate(toLocalISODate(new Date()));
 // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
+}, [dataLoading]);
 
 const scrollRoutineIntoView = useCallback((routineId) => {
 if (!routinesRef.current) return;
